@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useCallback, useRef, type MouseEvent } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
+import { createClient } from "@/lib/supabase/client";
+import type { Module } from "@/lib/types";
 
 interface Zone {
   id: string;
@@ -10,10 +12,9 @@ interface Zone {
   color: string;
   hoverColor: string;
   borderColor: string;
-  points: string; // SVG polygon points
+  points: string;
 }
 
-// Dimensions réelles de l'image plan-1.png
 const VB_WIDTH = 7791;
 const VB_HEIGHT = 4500;
 
@@ -26,7 +27,6 @@ const ZONES: Zone[] = [
     color: "rgba(200, 0, 120, 0.08)",
     hoverColor: "rgba(200, 0, 120, 0.22)",
     borderColor: "rgba(200, 0, 120, 0.7)",
-    // Magenta zone — grand rectangle gauche
     points: "378,303 3094,330 3094,2790 378,2790",
   },
   {
@@ -37,9 +37,7 @@ const ZONES: Zone[] = [
     color: "rgba(0, 190, 190, 0.08)",
     hoverColor: "rgba(0, 190, 190, 0.22)",
     borderColor: "rgba(0, 190, 190, 0.7)",
-    // Cyan zone — polygone irrégulier centre-droite avec mur diagonal
-    points:
-      "3094,990 5804,990 5804,1626 4774,3178 3088,3178",
+    points: "3094,990 5804,990 5804,1626 4774,3178 3088,3178",
   },
   {
     id: "regie",
@@ -49,7 +47,6 @@ const ZONES: Zone[] = [
     color: "rgba(30, 30, 180, 0.08)",
     hoverColor: "rgba(30, 30, 180, 0.25)",
     borderColor: "rgba(30, 30, 180, 0.8)",
-    // Blue zone — petit rectangle
     points: "845,2799 1279,2799 1279,3274 845,3274",
   },
   {
@@ -60,49 +57,41 @@ const ZONES: Zone[] = [
     color: "rgba(150, 0, 180, 0.08)",
     hoverColor: "rgba(150, 0, 180, 0.22)",
     borderColor: "rgba(150, 0, 180, 0.7)",
-    // Purple zone — rectangle bas-gauche
     points: "1299,2799 2173,2799 2173,4086 1299,4086",
   },
 ];
 
-// Passer à true pour afficher les coordonnées SVG au survol (mode calibration)
-const DEBUG_MODE = false;
-
 export default function InteractiveFloorPlan() {
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
-  const [mouseCoords, setMouseCoords] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [selectedModule, setSelectedModule] = useState<Module | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("modules")
+      .select("*")
+      .not("position_x", "is", null)
+      .order("number", { ascending: true })
+      .then(({ data }) => {
+        if (data) setModules(data as Module[]);
+      });
+  }, []);
 
   const handleZoneClick = useCallback((zone: Zone) => {
+    setSelectedModule(null);
     setSelectedZone((prev) => (prev?.id === zone.id ? null : zone));
+  }, []);
+
+  const handleModuleClick = useCallback((mod: Module) => {
+    setSelectedZone(null);
+    setSelectedModule((prev) => (prev?.id === mod.id ? null : mod));
   }, []);
 
   const handleClosePanel = useCallback(() => {
     setSelectedZone(null);
-  }, []);
-
-  const handleMouseMove = useCallback(
-    (e: MouseEvent<SVGSVGElement>) => {
-      if (!DEBUG_MODE || !svgRef.current) return;
-      const svg = svgRef.current;
-      const rect = svg.getBoundingClientRect();
-      const x = Math.round(
-        ((e.clientX - rect.left) / rect.width) * VB_WIDTH
-      );
-      const y = Math.round(
-        ((e.clientY - rect.top) / rect.height) * VB_HEIGHT
-      );
-      setMouseCoords({ x, y });
-    },
-    []
-  );
-
-  const handleMouseLeaveContainer = useCallback(() => {
-    setMouseCoords(null);
+    setSelectedModule(null);
   }, []);
 
   return (
@@ -113,13 +102,12 @@ export default function InteractiveFloorPlan() {
           Plan interactif
         </h2>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Cliquez sur une zone pour en savoir plus
+          Cliquez sur une zone ou un module pour en savoir plus
         </p>
       </div>
 
       {/* Container du plan */}
       <div className="relative w-full overflow-hidden rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900">
-        {/* Image du plan */}
         <Image
           src="/plan-1.png"
           alt="Plan du niveau -1"
@@ -129,15 +117,13 @@ export default function InteractiveFloorPlan() {
           priority
         />
 
-        {/* Overlay SVG interactif */}
+        {/* Overlay SVG */}
         <svg
-          ref={svgRef}
           viewBox={`0 0 ${VB_WIDTH} ${VB_HEIGHT}`}
           className="absolute inset-0 w-full h-full"
           preserveAspectRatio="xMinYMin meet"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeaveContainer}
         >
+          {/* Zones cliquables */}
           {ZONES.map((zone) => (
             <polygon
               key={zone.id}
@@ -169,56 +155,78 @@ export default function InteractiveFloorPlan() {
             />
           ))}
 
-          {/* Crosshair en mode debug */}
-          {DEBUG_MODE && mouseCoords && (
-            <>
-              <line
-                x1={mouseCoords.x}
-                y1={0}
-                x2={mouseCoords.x}
-                y2={VB_HEIGHT}
-                stroke="red"
-                strokeWidth={2}
-                opacity={0.5}
-                pointerEvents="none"
-              />
-              <line
-                x1={0}
-                y1={mouseCoords.y}
-                x2={VB_WIDTH}
-                y2={mouseCoords.y}
-                stroke="red"
-                strokeWidth={2}
-                opacity={0.5}
-                pointerEvents="none"
-              />
-            </>
-          )}
+          {/* Modules placés */}
+          {modules.map((mod) => {
+            const isSelected = selectedModule?.id === mod.id;
+            return (
+              <g
+                key={mod.id}
+                className="cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleModuleClick(mod);
+                }}
+              >
+                {/* Halo au survol */}
+                <circle
+                  cx={mod.position_x ?? 0}
+                  cy={mod.position_y ?? 0}
+                  r={isSelected ? 110 : 90}
+                  fill={isSelected ? "rgba(37, 99, 235, 0.15)" : "transparent"}
+                  stroke={isSelected ? "rgba(37, 99, 235, 0.4)" : "transparent"}
+                  strokeWidth={4}
+                  className="transition-all duration-200"
+                />
+                {/* Ombre */}
+                <circle
+                  cx={(mod.position_x ?? 0) + 3}
+                  cy={(mod.position_y ?? 0) + 3}
+                  r={70}
+                  fill="rgba(0,0,0,0.2)"
+                  className="pointer-events-none"
+                />
+                {/* Pin */}
+                <circle
+                  cx={mod.position_x ?? 0}
+                  cy={mod.position_y ?? 0}
+                  r={70}
+                  fill={isSelected ? "#2563eb" : "#18181b"}
+                  stroke="white"
+                  strokeWidth={6}
+                />
+                {/* Numéro */}
+                <text
+                  x={mod.position_x ?? 0}
+                  y={(mod.position_y ?? 0) + 5}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill="white"
+                  fontSize={48}
+                  fontWeight="bold"
+                  fontFamily="system-ui, sans-serif"
+                  className="pointer-events-none select-none"
+                >
+                  {mod.number}
+                </text>
+              </g>
+            );
+          })}
         </svg>
 
-        {/* Tooltip au survol */}
-        {hoveredZone && !selectedZone && (
+        {/* Tooltip */}
+        {hoveredZone && !selectedZone && !selectedModule && (
           <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 z-20">
             <div className="rounded-lg bg-black/80 px-4 py-2 text-sm font-medium text-white shadow-lg backdrop-blur-sm">
               {ZONES.find((z) => z.id === hoveredZone)?.name}
             </div>
           </div>
         )}
-
-        {/* Affichage coordonnées en mode debug */}
-        {DEBUG_MODE && mouseCoords && (
-          <div className="pointer-events-none absolute left-3 bottom-3 z-20">
-            <div className="rounded-md bg-black/80 px-3 py-1.5 font-mono text-xs text-green-400 shadow-lg backdrop-blur-sm">
-              x: {mouseCoords.x} &nbsp; y: {mouseCoords.y}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Panneau d'information */}
+      {/* Panneau d'information (zone ou module) */}
       <div
         className={`mt-4 overflow-hidden rounded-xl border transition-all duration-300 ${
-          selectedZone
+          selectedZone || selectedModule
             ? "max-h-60 opacity-100 border-zinc-200 dark:border-zinc-700"
             : "max-h-0 opacity-0 border-transparent"
         }`}
@@ -239,23 +247,52 @@ export default function InteractiveFloorPlan() {
                 {selectedZone.description}
               </p>
             </div>
-            <button
-              onClick={handleClosePanel}
-              className="shrink-0 rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
-              aria-label="Fermer"
-            >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18 18 6M6 6l12 12"
-                />
+            <button onClick={handleClosePanel} className="shrink-0 rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300" aria-label="Fermer">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+        {selectedModule && (
+          <div className="flex items-start justify-between gap-4 bg-white p-5 dark:bg-zinc-900">
+            <div className="flex-1">
+              <div className="flex items-center gap-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
+                  {selectedModule.number}
+                </span>
+                <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100">
+                  {selectedModule.name}
+                </h3>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                    selectedModule.media_type === "video"
+                      ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                      : "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
+                  }`}
+                >
+                  {selectedModule.media_type === "video" ? "Vidéo" : "Audio"}
+                </span>
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                {selectedModule.description || "Pas de description disponible."}
+              </p>
+              {selectedModule.images.length > 0 && (
+                <div className="mt-3 flex gap-2 overflow-x-auto">
+                  {selectedModule.images.map((img, i) => (
+                    <img
+                      key={i}
+                      src={img}
+                      alt={`${selectedModule.name} - ${i + 1}`}
+                      className="h-16 w-16 shrink-0 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            <button onClick={handleClosePanel} className="shrink-0 rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300" aria-label="Fermer">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
               </svg>
             </button>
           </div>

@@ -29,15 +29,10 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // IMPORTANT: Ne pas mettre de logique entre createServerClient et
-  // supabase.auth.getUser(). Un simple bug ici peut rendre le débogage
-  // très difficile pour les sessions qui se déconnectent aléatoirement.
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protection de la route /admin : redirection si non connecté
   if (request.nextUrl.pathname.startsWith("/admin")) {
     if (!user) {
       const url = request.nextUrl.clone();
@@ -45,7 +40,6 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Vérifier le rôle admin via les métadonnées utilisateur
     const role = user.app_metadata?.role;
     if (role !== "admin") {
       const url = request.nextUrl.clone();
@@ -54,7 +48,6 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Si l'utilisateur est déjà connecté et va sur /login, rediriger vers /admin
   if (request.nextUrl.pathname === "/login" && user) {
     const role = user.app_metadata?.role;
     if (role === "admin") {

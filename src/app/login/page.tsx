@@ -29,7 +29,6 @@ export default function LoginPage() {
       return;
     }
 
-    // Vérifier le rôle admin dans app_metadata
     const role = data.user?.app_metadata?.role;
     if (role !== "admin") {
       await supabase.auth.signOut();
