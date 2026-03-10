@@ -1,0 +1,137 @@
+---
+description: Règles globales du projet Enchanted Tools — lues automatiquement à chaque prompt.
+globs:
+alwaysApply: true
+---
+
+# Enchanted Tools — Règles IA
+
+## 1. Projet
+
+- **Stack** : Next.js 16 (App Router), React 19, TypeScript strict, Tailwind CSS v4, Supabase (auth, DB, storage)
+- **Langue de l'UI** : Français — tout texte visible (labels, placeholders, messages, aria-labels) doit être en français
+- **Alias d'import** : `@/*` → `./src/*`
+- **PWA** : Service Worker dans `public/sw.js`, manifest dans `public/manifest.json`
+
+### Structure du code
+
+```
+src/
+  app/                  # Pages et composants (App Router)
+    admin/              # Panneau admin (protégé par rôle)
+      components/       # Composants admin (client)
+    components/         # Composants partagés (client)
+    login/              # Page de connexion
+  lib/
+    supabase/           # Clients Supabase (client.ts, server.ts, middleware.ts)
+    types.ts            # Types partagés
+  middleware.ts         # Middleware d'auth
+public/                 # Assets statiques, SW, manifest, icônes
+```
+
+### Conventions Supabase
+
+- **Client-side** : `createClient()` depuis `@/lib/supabase/client`
+- **Server-side** : `await createClient()` depuis `@/lib/supabase/server`
+- **Middleware** : `updateSession()` depuis `@/lib/supabase/middleware`
+- Les rôles admin sont dans `user.app_metadata.role`
+
+---
+
+## 2. Commentaires
+
+- **Interdit** : les commentaires évidents, redondants ou de type "todo", "fixme", "hack"
+- **Autorisé uniquement** : les commentaires de section structurants, format `{/* Nom de section */}` en JSX ou `// --- Section ---` en logique
+- Ne jamais commenter du code mort — le supprimer
+- Ne jamais expliquer ce que fait une ligne si le code est lisible
+
+```tsx
+// ❌ Interdit
+const [count, setCount] = useState(0); // Initialise le compteur à 0
+// Récupère les modules depuis Supabase
+const { data } = await supabase.from("modules").select("*");
+
+// ✅ Autorisé
+{/* Actions */}
+<div className="flex gap-2">
+
+{/* Overlay SVG */}
+<svg viewBox="0 0 7791 4500">
+```
+
+---
+
+## 3. Éco-conception (RGESN)
+
+Chaque choix de code doit respecter ces principes. L'IA doit les appliquer systématiquement.
+
+### DEV.1 — Code optimisé, impact minimal
+
+- Privilégier les API natives du navigateur avant toute librairie tierce
+- Pas de dépendance supplémentaire si la fonctionnalité est réalisable en < 50 lignes
+- Optimiser les boucles, éviter les re-renders inutiles (`useCallback`, `useMemo` quand pertinent)
+- Préférer `const` partout, éviter les allocations inutiles
+
+### DEV.2 — Technologies standard et interopérables
+
+- HTML sémantique (`<main>`, `<nav>`, `<header>`, `<section>`, `<article>`, etc.)
+- CSS via Tailwind (pas de CSS-in-JS lourd ni de runtime CSS)
+- Pas de dépendance à un navigateur spécifique
+- Compatibilité avec les anciens terminaux : pas de features expérimentales non polyfillées
+
+### DEV.4 — Architecture logicielle durable
+
+- Composants petits et réutilisables (< 200 lignes idéalement)
+- Séparation claire : logique métier dans `lib/`, composants UI dans `components/`
+- Types TypeScript stricts — jamais de `any` sauf cas exceptionnel documenté
+
+### DEV.5 — Frontend optimisé
+
+- **Poids** : minimiser le poids de chaque page, lazy-load les composants lourds
+- **Requêtes** : limiter le nombre de requêtes par écran, regrouper les appels quand possible
+- **Cache** : utiliser le Service Worker, les headers de cache, et le cache Supabase côté client
+- **Ressources** : ne jamais charger de ressources non utilisées sur l'écran courant
+- **Images** : toujours utiliser `next/image` avec `width`/`height` explicites, formats modernes (WebP)
+- **Fonts** : uniquement via `next/font` (déjà configuré avec Geist)
+- **SVG** : inline uniquement si < 1 Ko, sinon fichier externe
+- **Animations** : CSS uniquement (`transition`, `animate`), pas de librairie d'animation JS
+
+### DEV.6 — Backend optimisé
+
+- Sélectionner uniquement les colonnes nécessaires dans les requêtes Supabase (`.select("id, name")` pas `.select("*")`)
+- Paginer les résultats quand la liste peut dépasser 50 éléments
+- Mettre en cache les données fréquemment lues et peu modifiées
+- Prévoir la suppression ou l'archivage des données obsolètes
+
+### DEV.7 — Accessibilité
+
+- Toujours un attribut `lang` sur `<html>` (ici `fr`)
+- Chaque page a un `<title>` unique et descriptif
+- Tous les éléments interactifs ont un label accessible (`aria-label`, `<label>`, texte visible)
+- Contraste de couleurs suffisant (ratio ≥ 4.5:1 pour le texte)
+- Navigation possible au clavier (focus visible, ordre logique)
+- Attributs `alt` sur toutes les images
+
+---
+
+## 4. Style et patterns
+
+### Tailwind CSS
+
+- Palette principale : `zinc` (gris), `blue` (accents), `red` (erreurs/destructif), `purple` (audio), `green` (succès)
+- Dark mode via `dark:` — toujours supporter les deux modes
+- Coins arrondis : `rounded-lg` (éléments), `rounded-xl` (cartes), `rounded-2xl` (modales)
+- Ombres : `shadow-sm` par défaut, `shadow-lg`/`shadow-xl` pour les éléments élevés
+
+### Composants React
+
+- Server Components par défaut, `"use client"` uniquement si nécessaire (état, événements, hooks navigateur)
+- Typer toutes les props avec `interface`
+- Nommer les fichiers en PascalCase pour les composants
+- Exporter par défaut les composants de page, nommé pour les composants réutilisables
+
+### Gestion d'erreur
+
+- Afficher les erreurs en français, dans un `<div>` stylisé rouge
+- Toujours gérer le cas `loading`, `error`, `empty` dans les listes
+- Jamais de `console.log` en production (uniquement `console.error` pour les erreurs critiques)
