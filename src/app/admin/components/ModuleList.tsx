@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import type { Module, ModuleInsert } from "@/lib/types";
 import ModuleForm from "./ModuleForm";
@@ -19,7 +20,7 @@ export default function ModuleList() {
   const fetchModules = useCallback(async () => {
     const { data } = await supabase
       .from("modules")
-      .select("*")
+      .select("id, number, name, description, media_type, media_url, images, position_x, position_y, zone_id")
       .order("number", { ascending: true });
     setModules((data as Module[]) ?? []);
     setLoading(false);
@@ -99,11 +100,13 @@ export default function ModuleList() {
 
               {/* Image preview */}
               {mod.images.length > 0 ? (
-                <div className="mb-3 h-28 overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                  <img
+                <div className="relative mb-3 h-28 overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                  <Image
                     src={mod.images[0]}
                     alt={mod.name}
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover"
                   />
                 </div>
               ) : (
@@ -158,6 +161,7 @@ export default function ModuleList() {
                 ) : (
                   <button
                     onClick={() => setDeleteConfirm(mod.id)}
+                    aria-label="Supprimer le module"
                     className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
                   >
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -12,7 +13,7 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -42,7 +43,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
+    <main className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
       <div className="w-full max-w-sm space-y-8 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
         <div className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-900 dark:bg-zinc-100">
@@ -145,14 +146,14 @@ export default function LoginPage() {
         </form>
 
         <div className="text-center">
-          <a
+          <Link
             href="/"
             className="text-sm text-zinc-500 transition hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
           >
             ← Retour à l&apos;accueil
-          </a>
+          </Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

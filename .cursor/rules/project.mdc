@@ -123,12 +123,20 @@ Chaque choix de code doit respecter ces principes. L'IA doit les appliquer syst�
 - Coins arrondis : `rounded-lg` (éléments), `rounded-xl` (cartes), `rounded-2xl` (modales)
 - Ombres : `shadow-sm` par défaut, `shadow-lg`/`shadow-xl` pour les éléments élevés
 
+### Primitives Next.js
+
+- **`<Link>`** : pour toute navigation **interne** (routes de l'app). Ne pas utiliser `<a>` pour les routes internes.
+- **`<a>`** : uniquement pour les liens **externes** (`https://…`), `mailto:`, `tel:`, ancres (`#`), ou `download`
+- **`next/image`** : obligatoire pour toutes les images avec `width`/`height` explicites. Ne pas utiliser `<img>`.
+- **`next/font`** : pour le chargement des polices (déjà configuré avec Geist)
+
 ### Composants React
 
 - Server Components par défaut, `"use client"` uniquement si nécessaire (état, événements, hooks navigateur)
 - Typer toutes les props avec `interface`
 - Nommer les fichiers en PascalCase pour les composants
 - Exporter par défaut les composants de page, nommé pour les composants réutilisables
+- **Factorisation** : tout composant dépassant ~200 lignes doit être découpé en sous-composants extraits dans des fichiers séparés au même niveau (`components/`)
 
 ### Gestion d'erreur
 
