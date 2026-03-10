@@ -41,6 +41,28 @@ export default function ModuleList() {
   };
 
   const handleDelete = async (id: string) => {
+    const mod = modules.find((m) => m.id === id);
+
+    if (mod) {
+      const pathsToRemove: string[] = [];
+
+      if (mod.media_url?.includes("module-assets")) {
+        const path = mod.media_url.split("module-assets/").pop();
+        if (path) pathsToRemove.push(path);
+      }
+
+      for (const img of mod.images) {
+        if (img.includes("module-assets")) {
+          const path = img.split("module-assets/").pop();
+          if (path) pathsToRemove.push(path);
+        }
+      }
+
+      if (pathsToRemove.length > 0) {
+        await supabase.storage.from("module-assets").remove(pathsToRemove);
+      }
+    }
+
     await supabase.from("modules").delete().eq("id", id);
     setDeleteConfirm(null);
     fetchModules();

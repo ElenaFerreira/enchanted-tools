@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Module, ModuleInsert } from "@/lib/types";
 import { ImageUploader } from "./ImageUploader";
+import { MediaUploader } from "./MediaUploader";
 
 interface ModuleFormProps {
   module?: Module | null;
@@ -135,20 +136,12 @@ export default function ModuleForm({ module, defaultNumber = 1, onSave, onCancel
             </div>
           </div>
 
-          {/* URL du média */}
-          <div>
-            <label htmlFor="module-media-url" className="block text-xs font-medium text-zinc-600 dark:text-zinc-400">
-              URL du média ({mediaType})
-            </label>
-            <input
-              id="module-media-url"
-              type="url"
-              value={mediaUrl}
-              onChange={(e) => setMediaUrl(e.target.value)}
-              placeholder={`https://exemple.com/fichier.${mediaType === "video" ? "mp4" : "mp3"}`}
-              className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-            />
-          </div>
+          {/* Fichier média */}
+          <MediaUploader
+            mediaType={mediaType}
+            value={mediaUrl}
+            onChange={setMediaUrl}
+          />
 
           {/* Images */}
           <ImageUploader images={images} onChange={setImages} />
