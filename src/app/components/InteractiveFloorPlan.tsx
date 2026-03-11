@@ -1,87 +1,26 @@
 "use client";
 
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import type { Module } from "@/lib/types";
 import { FloorPlanInfoPanel } from "./FloorPlanInfoPanel";
-
-interface Zone {
-  id: string;
-  name: string;
-  description: string;
-  color: string;
-  hoverColor: string;
-  borderColor: string;
-  points: string;
-}
-
-const BASE_VB_WIDTH = 7791;
-const BASE_VB_HEIGHT = 4500;
-
-const MOBILE_VB = { width: 280, height: 513, src: "/mobile-plan.svg" as const };
-const DESKTOP_VB = { width: 1156, height: 630, src: "/desktop-plan.svg" as const };
-
-const ZONES_META: Omit<Zone, "points">[] = [
-  {
-    id: "mirokai",
-    name: "Mirokaï Experience",
-    description:
-      "Espace principal dédié à l'expérience immersive Mirokaï. Cette grande salle accueille les visiteurs pour une découverte interactive unique.",
-    color: "rgba(200, 0, 120, 0.08)",
-    hoverColor: "rgba(200, 0, 120, 0.22)",
-    borderColor: "rgba(200, 0, 120, 0.7)",
-  },
-  {
-    id: "spoon",
-    name: "Zone Partenaire Spoon",
-    description: "Espace dédié au partenaire Spoon. Zone incluant les E.A.S., le lobby et les espaces de circulation principaux.",
-    color: "rgba(0, 190, 190, 0.08)",
-    hoverColor: "rgba(0, 190, 190, 0.22)",
-    borderColor: "rgba(0, 190, 190, 0.7)",
-  },
-  {
-    id: "regie",
-    name: "Régie",
-    description: "Local technique de régie. Poste de contrôle pour la gestion des équipements audiovisuels et techniques de l'espace.",
-    color: "rgba(30, 30, 180, 0.08)",
-    hoverColor: "rgba(30, 30, 180, 0.25)",
-    borderColor: "rgba(30, 30, 180, 0.8)",
-  },
-  {
-    id: "cyclage",
-    name: "Salle de Cyclage",
-    description:
-      "Salle de cyclage comprenant le studio, le stockage et les espaces techniques associés. Zone dédiée à la préparation et au recyclage du contenu.",
-    color: "rgba(150, 0, 180, 0.08)",
-    hoverColor: "rgba(150, 0, 180, 0.22)",
-    borderColor: "rgba(150, 0, 180, 0.7)",
-  },
-];
-
-const ZONE_POINTS_MOBILE: Record<string, string> = {
-  mirokai: "99,8 272,8 272,198 99,198",
-  spoon: "77,199 222,199 222,386 180,386 77,318 77,199",
-  regie: "65,36 99,36 99,73 65,73",
-  cyclage: "7,74 99,74 99,133 7,133",
-};
-
-const ZONE_POINTS_DESKTOP: Record<string, string> = {
-  mirokai: "17,17 447,17 447,407 17,407",
-  spoon: "447,128 869,128 867,231 719,457 447,457",
-  regie: "82,407 166,407 166,483 82,483",
-  cyclage: "166,407 300,407 300,615 166,615",
-};
-
-const ZONES_MOBILE: Zone[] = ZONES_META.map((z) => ({
-  ...z,
-  points: ZONE_POINTS_MOBILE[z.id] ?? "",
-}));
-
-const ZONES_DESKTOP: Zone[] = ZONES_META.map((z) => ({
-  ...z,
-  points: ZONE_POINTS_DESKTOP[z.id] ?? "",
-}));
+import {
+  BASE_VB_WIDTH,
+  BASE_VB_HEIGHT,
+  MOBILE_VB,
+  DESKTOP_VB,
+  ZONE_MASK_INACTIVE,
+  ZONE_STROKE,
+  ZONE_POINT_RADIUS_MOBILE,
+  ZONE_POINT_RADIUS_DESKTOP,
+  ZONE_POINT_COLORS,
+  ZONE_POINT_CENTERS_MOBILE,
+  ZONE_POINT_CENTERS_DESKTOP,
+  ZONES_MOBILE,
+  ZONES_DESKTOP,
+  type Zone,
+} from "./InteractiveFloorPlan.config";
 
 export default function InteractiveFloorPlan() {
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
@@ -89,17 +28,54 @@ export default function InteractiveFloorPlan() {
   const [modules, setModules] = useState<Module[]>([]);
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia("(min-width: 1024px)");
-    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    setIsDesktop(mql.matches);
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const zoneCardRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const sliderRef = useRef<HTMLDivElement | null>(null);
 
   const vb = isDesktop ? DESKTOP_VB : MOBILE_VB;
   const zones = isDesktop ? ZONES_DESKTOP : ZONES_MOBILE;
+  const zoneCenters = isDesktop ? ZONE_POINT_CENTERS_DESKTOP : ZONE_POINT_CENTERS_MOBILE;
+  const zonePointRadiusBase = isDesktop ? ZONE_POINT_RADIUS_DESKTOP : ZONE_POINT_RADIUS_MOBILE;
+  const activeZoneIdFromSlider = zones[activeSlideIndex]?.id ?? null;
+  const activeZoneId = hoveredZone ?? activeZoneIdFromSlider;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const handleChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+
+    // Valeur initiale après hydratation
+    queueMicrotask(() => setIsDesktop(mql.matches));
+
+    mql.addEventListener("change", handleChange);
+    return () => mql.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedZone) return;
+    const el = zoneCardRefs.current[selectedZone.id];
+    el?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [selectedZone]);
+
+  useEffect(() => {
+    const container = sliderRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollLeft, clientWidth, scrollWidth } = container;
+      if (!scrollWidth || !clientWidth) return;
+      const slideWidth = scrollWidth / zones.length;
+      if (!slideWidth) return;
+      const rawIndex = scrollLeft / slideWidth;
+      const nextIndex = Math.min(zones.length - 1, Math.max(0, Math.round(rawIndex)));
+      setActiveSlideIndex(nextIndex);
+    };
+
+    handleScroll();
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [zones.length]);
+
   const legacyScale = useMemo(() => {
     const scaleX = vb.width / BASE_VB_WIDTH;
     const scaleY = vb.height / BASE_VB_HEIGHT;
@@ -144,11 +120,6 @@ export default function InteractiveFloorPlan() {
     })();
   }, []);
 
-  const handleZoneClick = useCallback((zone: Zone) => {
-    setSelectedModule(null);
-    setSelectedZone((prev) => (prev?.id === zone.id ? null : zone));
-  }, []);
-
   const handleModuleClick = useCallback((mod: Module) => {
     setSelectedZone(null);
     setSelectedModule((prev) => (prev?.id === mod.id ? null : mod));
@@ -179,28 +150,36 @@ export default function InteractiveFloorPlan() {
         />
 
         {/* Overlay SVG */}
-        <svg
-          viewBox={`0 0 ${vb.width} ${vb.height}`}
-          className="absolute inset-0 w-full h-full"
-          preserveAspectRatio="xMinYMin meet"
-        >
-          {/* Zones cliquables */}
-          {zones.map((zone) => (
-            <polygon
-              key={zone.id}
-              points={zone.points}
-              fill={selectedZone?.id === zone.id ? zone.hoverColor : hoveredZone === zone.id ? zone.hoverColor : zone.color}
-              stroke={zone.borderColor}
-              strokeWidth={
-                selectedZone?.id === zone.id ? 12 * legacyScale.scale : hoveredZone === zone.id ? 10 * legacyScale.scale : 4 * legacyScale.scale
-              }
-              strokeDasharray={selectedZone?.id === zone.id || hoveredZone === zone.id ? "none" : "24 12"}
-              className="cursor-pointer transition-all duration-200"
-              onMouseEnter={() => setHoveredZone(zone.id)}
-              onMouseLeave={() => setHoveredZone(null)}
-              onClick={() => handleZoneClick(zone)}
-            />
-          ))}
+        <svg viewBox={`0 0 ${vb.width} ${vb.height}`} className="absolute inset-0 w-full h-full" preserveAspectRatio="xMinYMin meet">
+          {/* Zones cliquables + points de repère */}
+          {zones.map((zone) => {
+            const centroid = zoneCenters[zone.id];
+            const isActive = activeZoneId === zone.id;
+            return (
+              <g key={zone.id}>
+                <polygon
+                  points={zone.points}
+                  fill={isActive ? zone.hoverColor : ZONE_MASK_INACTIVE}
+                  stroke={ZONE_STROKE}
+                  strokeWidth={isActive ? 10 * legacyScale.scale : 4 * legacyScale.scale}
+                  strokeDasharray={isActive ? "none" : "24 12"}
+                  className="transition-all duration-200"
+                  onMouseEnter={() => setHoveredZone(zone.id)}
+                  onMouseLeave={() => setHoveredZone(null)}
+                />
+                {centroid && (
+                  <circle
+                    cx={centroid.x}
+                    cy={centroid.y}
+                    r={zonePointRadiusBase * legacyScale.scale}
+                    fill={ZONE_POINT_COLORS[zone.id] ?? "rgba(255, 255, 255, 0.7)"}
+                    stroke="white"
+                    strokeWidth={4 * legacyScale.scale}
+                  />
+                )}
+              </g>
+            );
+          })}
 
           {/* Modules placés */}
           {modules.map((mod) => {
@@ -256,36 +235,69 @@ export default function InteractiveFloorPlan() {
             );
           })}
         </svg>
-
-        {/* Tooltip */}
-        {hoveredZone && !selectedZone && !selectedModule && (
-          <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 z-20">
-            <div className="rounded-lg bg-black/80 px-4 py-2 text-sm font-medium text-white shadow-lg backdrop-blur-sm">
-              {zones.find((z) => z.id === hoveredZone)?.name}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Panneau d'information */}
       <FloorPlanInfoPanel selectedZone={selectedZone} selectedModule={selectedModule} onClose={handleClosePanel} />
 
-      {/* Légende */}
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
-        {zones.map((zone) => (
-          <button
-            key={zone.id}
-            onClick={() => handleZoneClick(zone)}
-            className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
-              selectedZone?.id === zone.id
-                ? "border-zinc-400 bg-zinc-100 text-zinc-800 dark:border-zinc-500 dark:bg-zinc-800 dark:text-zinc-200"
-                : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            }`}
-          >
-            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: zone.borderColor }} />
-            {zone.name}
-          </button>
-        ))}
+      {/* Slider de zones */}
+      <div className="relative mt-6 lg:max-w-[480px] lg:mx-auto">
+        {/* Dégradé gauche supprimé */}
+
+        <div
+          ref={sliderRef}
+          className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          aria-label="Parcourir les zones du plan"
+        >
+          {zones.map((zone) => {
+            const tagColor = ZONE_POINT_COLORS[zone.id] ?? "rgba(255, 255, 255, 0.7)";
+            return (
+              <button
+                key={zone.id}
+                ref={(el) => {
+                  zoneCardRefs.current[zone.id] = el;
+                }}
+                className={[
+                  "snap-center shrink-0",
+                  "w-[calc(100%-2rem)] sm:w-[420px] lg:w-full",
+                  "p-4 text-left shadow-sm backdrop-blur",
+                  "min-h-[120px] sm:min-h-[140px]",
+                  "transition",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+                ].join(" ")}
+                style={{
+                  borderRadius: 4,
+                  border: "0.3px solid #FFF",
+                  background: "rgba(255, 255, 255, 0.08)",
+                }}
+                aria-label={`Sélectionner la zone : ${zone.name}`}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="mt-1 inline-block h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: tagColor }} aria-hidden="true" />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-white">{zone.name}</p>
+                    <p className="mt-1 text-sm text-white/70">{zone.description}</p>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-3 flex justify-center gap-2">
+          {zones.map((zone, index) => {
+            const isActive = index === activeSlideIndex;
+            return (
+              <span
+                key={zone.id}
+                className="h-1.5 w-1.5 rounded-full"
+                style={{
+                  backgroundColor: isActive ? "rgba(255, 255, 255, 0.61)" : "rgba(255, 255, 255, 0.17)",
+                }}
+              />
+            );
+          })}
+        </div>
       </div>
     </div>
   );
