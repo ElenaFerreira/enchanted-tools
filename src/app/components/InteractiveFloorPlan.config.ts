@@ -11,27 +11,33 @@ export interface Zone {
 export const BASE_VB_WIDTH = 7791;
 export const BASE_VB_HEIGHT = 4500;
 
-export const MOBILE_VB = { width: 280, height: 513, src: "/mobile-plan.svg" as const };
+export const MOBILE_VB = { width: 280, height: 513, src: "/mobile-plan-2.svg" as const };
 export const DESKTOP_VB = { width: 1156, height: 630, src: "/desktop-plan.svg" as const };
 
 type BaseZoneMeta = Pick<Zone, "id" | "name" | "description" | "color">;
 
-const ZONE_HOVER_COLOR = "rgba(255, 255, 255, 0.3)";
-const ZONE_BORDER_COLOR = "rgba(255, 255, 255, 1)";
+function hexToRgba(hex: string, alpha: number) {
+  const s = hex.trim().replace("#", "");
+  if (s.length !== 6) return `rgba(255, 255, 255, ${alpha})`;
+  const r = Number.parseInt(s.slice(0, 2), 16);
+  const g = Number.parseInt(s.slice(2, 4), 16);
+  const b = Number.parseInt(s.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 const ZONES_META: BaseZoneMeta[] = [
+  {
+    id: "spoon",
+    name: "Zone Partenaire Spoon",
+    description: "Espace dédié au partenaire Spoon. Zone incluant les E.A.S., le lobby et les espaces de circulation principaux.",
+    color: "rgba(0, 190, 190, 0.08)",
+  },
   {
     id: "mirokai",
     name: "Mirokaï Experience",
     description:
       "Espace principal dédié à l'expérience immersive Mirokaï. Cette grande salle accueille les visiteurs pour une découverte interactive unique.",
     color: "rgba(200, 0, 120, 0.08)",
-  },
-  {
-    id: "spoon",
-    name: "Zone Partenaire Spoon",
-    description: "Espace dédié au partenaire Spoon. Zone incluant les E.A.S., le lobby et les espaces de circulation principaux.",
-    color: "rgba(0, 190, 190, 0.08)",
   },
   {
     id: "regie",
@@ -90,15 +96,14 @@ export const ZONE_POINT_CENTERS_DESKTOP: Record<string, { x: number; y: number }
 
 export const ZONES_MOBILE: Zone[] = ZONES_META.map((z) => ({
   ...z,
-  hoverColor: ZONE_HOVER_COLOR,
-  borderColor: ZONE_BORDER_COLOR,
+  hoverColor: hexToRgba(ZONE_POINT_COLORS[z.id] ?? "#FFFFFF", 0.22),
+  borderColor: hexToRgba(ZONE_POINT_COLORS[z.id] ?? "#FFFFFF", 0.95),
   points: ZONE_POINTS_MOBILE[z.id] ?? "",
 }));
 
 export const ZONES_DESKTOP: Zone[] = ZONES_META.map((z) => ({
   ...z,
-  hoverColor: ZONE_HOVER_COLOR,
-  borderColor: ZONE_BORDER_COLOR,
+  hoverColor: hexToRgba(ZONE_POINT_COLORS[z.id] ?? "#FFFFFF", 0.22),
+  borderColor: hexToRgba(ZONE_POINT_COLORS[z.id] ?? "#FFFFFF", 0.95),
   points: ZONE_POINTS_DESKTOP[z.id] ?? "",
 }));
-

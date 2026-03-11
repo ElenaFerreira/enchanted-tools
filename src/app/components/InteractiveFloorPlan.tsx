@@ -153,30 +153,19 @@ export default function InteractiveFloorPlan() {
         <svg viewBox={`0 0 ${vb.width} ${vb.height}`} className="absolute inset-0 w-full h-full" preserveAspectRatio="xMinYMin meet">
           {/* Zones cliquables + points de repère */}
           {zones.map((zone) => {
-            const centroid = zoneCenters[zone.id];
             const isActive = activeZoneId === zone.id;
             return (
               <g key={zone.id}>
                 <polygon
                   points={zone.points}
                   fill={isActive ? zone.hoverColor : ZONE_MASK_INACTIVE}
-                  stroke={ZONE_STROKE}
+                  stroke={isActive ? zone.borderColor : ZONE_STROKE}
                   strokeWidth={isActive ? 10 * legacyScale.scale : 4 * legacyScale.scale}
                   strokeDasharray={isActive ? "none" : "24 12"}
                   className="transition-all duration-200"
                   onMouseEnter={() => setHoveredZone(zone.id)}
                   onMouseLeave={() => setHoveredZone(null)}
                 />
-                {centroid && (
-                  <circle
-                    cx={centroid.x}
-                    cy={centroid.y}
-                    r={zonePointRadiusBase * legacyScale.scale}
-                    fill={ZONE_POINT_COLORS[zone.id] ?? "rgba(255, 255, 255, 0.7)"}
-                    stroke="white"
-                    strokeWidth={4 * legacyScale.scale}
-                  />
-                )}
               </g>
             );
           })}
@@ -241,7 +230,7 @@ export default function InteractiveFloorPlan() {
       <FloorPlanInfoPanel selectedZone={selectedZone} selectedModule={selectedModule} onClose={handleClosePanel} />
 
       {/* Slider de zones */}
-      <div className="relative mt-6 lg:max-w-[480px] lg:mx-auto">
+      <div className="relative z-10 -mt-32 sm:-mt-40 lg:mt-6 lg:max-w-[480px] lg:mx-auto">
         {/* Dégradé gauche supprimé */}
 
         <div
@@ -260,23 +249,22 @@ export default function InteractiveFloorPlan() {
                 className={[
                   "snap-center shrink-0",
                   "w-[calc(100%-2rem)] sm:w-[420px] lg:w-full",
-                  "p-4 text-left shadow-sm backdrop-blur",
-                  "min-h-[120px] sm:min-h-[140px]",
+                  "p-3 sm:p-4 text-left shadow-sm backdrop-blur",
+                  "min-h-[80px] sm:min-h-[110px]",
                   "transition",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
                 ].join(" ")}
                 style={{
                   borderRadius: 4,
-                  border: "0.3px solid #FFF",
-                  background: "rgba(255, 255, 255, 0.08)",
+                  border: `0.3px solid ${zone.borderColor}`,
+                  background: zone.hoverColor,
                 }}
                 aria-label={`Sélectionner la zone : ${zone.name}`}
               >
-                <div className="flex items-start gap-3">
-                  <span className="mt-1 inline-block h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: tagColor }} aria-hidden="true" />
+                <div className="flex items-start">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-white">{zone.name}</p>
-                    <p className="mt-1 text-sm text-white/70">{zone.description}</p>
+                    <p className="truncate text-xs sm:text-sm font-semibold text-white">{zone.name}</p>
+                    <p className="mt-1 text-xs sm:text-sm text-white/70">{zone.description}</p>
                   </div>
                 </div>
               </button>
