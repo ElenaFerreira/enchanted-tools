@@ -221,7 +221,7 @@ export default function PlanEditor() {
             <svg
               ref={svgRef}
               viewBox={`0 0 ${vb.width} ${vb.height}`}
-              className="absolute inset-0 h-full w-full"
+              className="absolute inset-0 h-full w-full touch-none"
               preserveAspectRatio="xMinYMin meet"
               onClick={() => setSelectedId(null)}
             >
