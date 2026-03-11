@@ -133,10 +133,11 @@ export default function InteractiveFloorPlan() {
   }, [zoomedZoneId, zoneCenters, vb.width, vb.height, isDesktop]);
 
   const pinSizes = useMemo(() => {
-    const r = 70 * legacyScale.scale;
-    const ring = 90 * legacyScale.scale;
-    const ringSelected = 110 * legacyScale.scale;
-    const fontSize = 48 * legacyScale.scale;
+    const factor = isDesktop ? 1 : 2;
+    const r = 70 * legacyScale.scale * factor;
+    const ring = 90 * legacyScale.scale * factor;
+    const ringSelected = 110 * legacyScale.scale * factor;
+    const fontSize = 48 * legacyScale.scale * factor;
     return {
       r,
       ring,
@@ -145,7 +146,7 @@ export default function InteractiveFloorPlan() {
       stroke: 6 * legacyScale.scale,
       shadowOffset: 3 * legacyScale.scale,
     };
-  }, [legacyScale.scale]);
+  }, [legacyScale.scale, isDesktop]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -345,7 +346,13 @@ export default function InteractiveFloorPlan() {
       <FloorPlanInfoPanel selectedZone={selectedZone} selectedModule={selectedModule} onClose={handleClosePanel} />
 
       {/* Slider de zones */}
-      <div className="relative z-10 -mt-32 sm:-mt-40 lg:mt-6 lg:max-w-[480px] lg:mx-auto">
+      <div
+        className={[
+          "relative z-10 lg:mt-6 lg:max-w-[480px] lg:mx-auto",
+          zoomedZoneId ? "mt-4 sm:mt-6" : "-mt-32 sm:-mt-40",
+          "transition-all duration-300",
+        ].join(" ")}
+      >
         {/* Dégradé gauche supprimé */}
 
         <div

@@ -23,7 +23,7 @@ export default function AdminDashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition ${
+              className={`relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition cursor-pointer ${
                 activeTab === tab.id
                   ? "text-zinc-900 dark:text-zinc-50"
                   : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"

@@ -110,7 +110,7 @@ export function MediaUploader({ mediaType, value, onChange }: MediaUploaderProps
           <button
             type="button"
             onClick={() => setMode("upload")}
-            className={`rounded px-2 py-0.5 text-xs font-medium transition ${
+            className={`rounded px-2 py-0.5 text-xs font-medium transition cursor-pointer ${
               mode === "upload"
                 ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
                 : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -121,7 +121,7 @@ export function MediaUploader({ mediaType, value, onChange }: MediaUploaderProps
           <button
             type="button"
             onClick={() => setMode("url")}
-            className={`rounded px-2 py-0.5 text-xs font-medium transition ${
+            className={`rounded px-2 py-0.5 text-xs font-medium transition cursor-pointer ${
               mode === "url"
                 ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
                 : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -144,7 +144,7 @@ export function MediaUploader({ mediaType, value, onChange }: MediaUploaderProps
               <button
                 type="button"
                 onClick={removeCurrentFile}
-                className="shrink-0 rounded p-1 text-zinc-400 transition hover:bg-zinc-200 hover:text-red-600 dark:hover:bg-zinc-700 dark:hover:text-red-400"
+                className="shrink-0 rounded p-1 text-zinc-400 transition hover:bg-zinc-200 hover:text-red-600 cursor-pointer dark:hover:bg-zinc-700 dark:hover:text-red-400"
                 aria-label="Supprimer le fichier"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

@@ -158,7 +158,7 @@ export function ImageUploader({ images, onChange }: ImageUploaderProps) {
               <button
                 type="button"
                 onClick={() => handleRemoveImage(i)}
-                className="absolute inset-0 flex items-center justify-center bg-black/60 text-white opacity-0 transition group-hover:opacity-100"
+                className="absolute inset-0 flex items-center justify-center bg-black/60 text-white opacity-0 transition group-hover:opacity-100 cursor-pointer"
                 aria-label={`Supprimer l'image ${i + 1}`}
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
