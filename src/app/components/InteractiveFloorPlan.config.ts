@@ -94,6 +94,26 @@ export const ZONE_POINT_CENTERS_DESKTOP: Record<string, { x: number; y: number }
   cyclage: { x: 233, y: 575 },
 };
 
+export interface ZoneZoomPreset {
+  targetX: number;
+  targetY: number;
+  scale: number;
+}
+
+export const ZONE_ZOOM_MOBILE: Record<string, ZoneZoomPreset> = {
+  cyclage: { targetX: 90, targetY: 80, scale: 2.1 },
+  regie: { targetX: 70, targetY: 80, scale: 2.1 },
+  mirokai: { targetX: 40, targetY: 60, scale: 1.5 },
+  spoon: { targetX: 50, targetY: 50, scale: 1.6 },
+};
+
+export const ZONE_ZOOM_DESKTOP: Record<string, ZoneZoomPreset> = {
+  cyclage: { targetX: 65, targetY: 40, scale: 1.7 },
+  regie: { targetX: 70, targetY: 30, scale: 1.7 },
+  mirokai: { targetX: 60, targetY: 70, scale: 1.4 },
+  spoon: { targetX: 50, targetY: 65, scale: 1.5 },
+};
+
 export const ZONES_MOBILE: Zone[] = ZONES_META.map((z) => ({
   ...z,
   hoverColor: hexToRgba(ZONE_POINT_COLORS[z.id] ?? "#FFFFFF", 0.22),

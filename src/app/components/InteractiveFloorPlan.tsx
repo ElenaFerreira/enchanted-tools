@@ -19,8 +19,29 @@ import {
   ZONE_POINT_CENTERS_DESKTOP,
   ZONES_MOBILE,
   ZONES_DESKTOP,
+  ZONE_ZOOM_MOBILE,
+  ZONE_ZOOM_DESKTOP,
   type Zone,
 } from "./InteractiveFloorPlan.config";
+
+function isPointInPolygon(x: number, y: number, polygonString: string): boolean {
+  const points = polygonString
+    .split(" ")
+    .map((pair) => pair.split(",").map(Number))
+    .filter((pair): pair is [number, number] => pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]));
+
+  if (points.length < 3) return false;
+
+  let inside = false;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    const [xi, yi] = points[i];
+    const [xj, yj] = points[j];
+    const intersects = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi || 1e-9) + xi;
+    if (intersects) inside = !inside;
+  }
+
+  return inside;
+}
 
 export default function InteractiveFloorPlan() {
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
@@ -29,6 +50,7 @@ export default function InteractiveFloorPlan() {
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const [zoomedZoneId, setZoomedZoneId] = useState<string | null>(null);
   const zoneCardRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const sliderRef = useRef<HTMLDivElement | null>(null);
 
@@ -82,6 +104,34 @@ export default function InteractiveFloorPlan() {
     return { scaleX, scaleY, scale: Math.min(scaleX, scaleY) };
   }, [vb.height, vb.width]);
 
+  const zoomTransform = useMemo(() => {
+    if (!zoomedZoneId) {
+      return { scale: 1, translateX: 0, translateY: 0 };
+    }
+
+    const center = zoneCenters[zoomedZoneId];
+    if (!center) {
+      return { scale: 1, translateX: 0, translateY: 0 };
+    }
+
+    const presets = isDesktop ? ZONE_ZOOM_DESKTOP : ZONE_ZOOM_MOBILE;
+    const preset = presets[zoomedZoneId];
+
+    const targetX = preset?.targetX ?? 50;
+    const targetY = preset?.targetY ?? 50;
+    const scale = preset?.scale ?? (isDesktop ? 1.7 : 2.1);
+
+    const centerXPct = (center.x / vb.width) * 100;
+    const centerYPct = (center.y / vb.height) * 100;
+    const offsetX = targetX - centerXPct;
+    const offsetY = targetY - centerYPct;
+
+    const translateX = offsetX;
+    const translateY = offsetY;
+
+    return { scale, translateX, translateY };
+  }, [zoomedZoneId, zoneCenters, vb.width, vb.height, isDesktop]);
+
   const pinSizes = useMemo(() => {
     const r = 70 * legacyScale.scale;
     const ring = 90 * legacyScale.scale;
@@ -125,10 +175,62 @@ export default function InteractiveFloorPlan() {
     setSelectedModule((prev) => (prev?.id === mod.id ? null : mod));
   }, []);
 
+  const handleZoneClick = useCallback(
+    (zone: Zone) => {
+      setSelectedModule(null);
+      setSelectedZone(null);
+      setZoomedZoneId((current) => (current === zone.id ? null : zone.id));
+
+      const container = sliderRef.current;
+      if (!container) return;
+
+      const index = zones.findIndex((z) => z.id === zone.id);
+      if (index === -1 || !zones.length) return;
+
+      const { scrollWidth, clientWidth } = container;
+      if (!scrollWidth || !clientWidth) return;
+
+      const slideWidth = scrollWidth / zones.length;
+      container.scrollTo({
+        left: index * slideWidth,
+        behavior: "smooth",
+      });
+    },
+    [zones],
+  );
+
   const handleClosePanel = useCallback(() => {
     setSelectedZone(null);
     setSelectedModule(null);
   }, []);
+
+  const modulesWithZone = useMemo(
+    () =>
+      modules.map((mod) => {
+        const vbX = isDesktop ? mod.position_x_desktop : mod.position_x_mobile;
+        const vbY = isDesktop ? mod.position_y_desktop : mod.position_y_mobile;
+        const legacyX = mod.position_x;
+        const legacyY = mod.position_y;
+
+        const cx = vbX !== null ? vbX : legacyX !== null ? legacyX * legacyScale.scaleX : null;
+        const cy = vbY !== null ? vbY : legacyY !== null ? legacyY * legacyScale.scaleY : null;
+
+        if (cx === null || cy === null) {
+          return { mod, zoneId: null as string | null, cx: null as number | null, cy: null as number | null };
+        }
+
+        let zoneId: string | null = null;
+        for (const zone of zones) {
+          if (zone.points && isPointInPolygon(cx, cy, zone.points)) {
+            zoneId = zone.id;
+            break;
+          }
+        }
+
+        return { mod, zoneId, cx, cy };
+      }),
+    [modules, isDesktop, legacyScale.scaleX, legacyScale.scaleY, zones],
+  );
 
   return (
     <div className="relative w-full max-w-6xl mx-auto">
@@ -138,92 +240,105 @@ export default function InteractiveFloorPlan() {
       </div>
 
       {/* Container du plan */}
-      <div className="relative mx-auto w-[80vw] max-w-[300px] overflow-hidden sm:w-full sm:max-w-none">
-        <Image
-          src={vb.src}
-          alt="Plan du niveau -1"
-          width={vb.width}
-          height={vb.height}
-          className="block w-full h-auto"
-          sizes="(min-width: 1024px) 1156px, 100vw"
-          priority
-        />
+      <div
+        className="relative mx-auto w-[80vw] max-w-[300px] overflow-hidden sm:w-full sm:max-w-none"
+        onClick={() => {
+          setZoomedZoneId(null);
+          setSelectedZone(null);
+        }}
+        aria-label="Plan interactif du niveau -1"
+      >
+        <div
+          className="relative transform transition-transform duration-500 ease-in-out"
+          style={{
+            transform: `translate(${zoomTransform.translateX}%, ${zoomTransform.translateY}%) scale(${zoomTransform.scale})`,
+          }}
+        >
+          <Image
+            src={vb.src}
+            alt="Plan du niveau -1"
+            width={vb.width}
+            height={vb.height}
+            className="block w-full h-auto"
+            sizes="(min-width: 1024px) 1156px, 100vw"
+            priority
+          />
 
-        {/* Overlay SVG */}
-        <svg viewBox={`0 0 ${vb.width} ${vb.height}`} className="absolute inset-0 w-full h-full" preserveAspectRatio="xMinYMin meet">
-          {/* Zones cliquables + points de repère */}
-          {zones.map((zone) => {
-            const isActive = activeZoneId === zone.id;
-            return (
-              <g key={zone.id}>
-                <polygon
-                  points={zone.points}
-                  fill={isActive ? zone.hoverColor : ZONE_MASK_INACTIVE}
-                  stroke={isActive ? zone.borderColor : ZONE_STROKE}
-                  strokeWidth={isActive ? 10 * legacyScale.scale : 4 * legacyScale.scale}
-                  strokeDasharray={isActive ? "none" : "24 12"}
-                  className="transition-all duration-200"
-                  onMouseEnter={() => setHoveredZone(zone.id)}
-                  onMouseLeave={() => setHoveredZone(null)}
-                />
-              </g>
-            );
-          })}
+          {/* Overlay SVG */}
+          <svg viewBox={`0 0 ${vb.width} ${vb.height}`} className="absolute inset-0 w-full h-full" preserveAspectRatio="xMinYMin meet">
+            {/* Zones cliquables + points de repère */}
+            {zones.map((zone) => {
+              const isActive = activeZoneId === zone.id;
+              return (
+                <g key={zone.id} className="cursor-pointer">
+                  <polygon
+                    points={zone.points}
+                    fill={isActive ? zone.hoverColor : ZONE_MASK_INACTIVE}
+                    stroke={isActive ? zone.borderColor : ZONE_STROKE}
+                    strokeWidth={isActive ? 10 * legacyScale.scale : 4 * legacyScale.scale}
+                    strokeDasharray={isActive ? "none" : "24 12"}
+                    className="transition-all duration-200"
+                    onMouseEnter={() => setHoveredZone(zone.id)}
+                    onMouseLeave={() => setHoveredZone(null)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleZoneClick(zone);
+                    }}
+                  />
+                </g>
+              );
+            })}
 
-          {/* Modules placés */}
-          {modules.map((mod) => {
-            const isSelected = selectedModule?.id === mod.id;
-            const vbX = isDesktop ? mod.position_x_desktop : mod.position_x_mobile;
-            const vbY = isDesktop ? mod.position_y_desktop : mod.position_y_mobile;
-            const legacyX = mod.position_x;
-            const legacyY = mod.position_y;
+            {/* Modules placés */}
+            {modulesWithZone.map(({ mod, zoneId, cx, cy }) => {
+              if (cx === null || cy === null) return null;
+              if (!zoomedZoneId || zoneId !== zoomedZoneId) return null;
 
-            const cx = vbX !== null ? vbX : legacyX !== null ? legacyX * legacyScale.scaleX : null;
-            const cy = vbY !== null ? vbY : legacyY !== null ? legacyY * legacyScale.scaleY : null;
-            if (cx === null || cy === null) return null;
-            return (
-              <g
-                key={mod.id}
-                className="cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleModuleClick(mod);
-                }}
-              >
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={isSelected ? pinSizes.ringSelected : pinSizes.ring}
-                  fill={isSelected ? "rgba(37, 99, 235, 0.15)" : "transparent"}
-                  stroke={isSelected ? "rgba(37, 99, 235, 0.4)" : "transparent"}
-                  strokeWidth={4}
-                  className="transition-all duration-200"
-                />
-                <circle
-                  cx={cx + pinSizes.shadowOffset}
-                  cy={cy + pinSizes.shadowOffset}
-                  r={pinSizes.r}
-                  fill="rgba(0,0,0,0.2)"
-                  className="pointer-events-none"
-                />
-                <circle cx={cx} cy={cy} r={pinSizes.r} fill={isSelected ? "#2563eb" : "#18181b"} stroke="white" strokeWidth={pinSizes.stroke} />
-                <text
-                  x={cx}
-                  y={cy + 5 * legacyScale.scale}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fill="white"
-                  fontSize={pinSizes.fontSize}
-                  fontWeight="bold"
-                  fontFamily="system-ui, sans-serif"
-                  className="pointer-events-none select-none"
+              const isSelected = selectedModule?.id === mod.id;
+              return (
+                <g
+                  key={mod.id}
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleModuleClick(mod);
+                  }}
                 >
-                  {mod.number}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={isSelected ? pinSizes.ringSelected : pinSizes.ring}
+                    fill={isSelected ? "rgba(37, 99, 235, 0.15)" : "transparent"}
+                    stroke={isSelected ? "rgba(37, 99, 235, 0.4)" : "transparent"}
+                    strokeWidth={4}
+                    className="transition-all duration-200"
+                  />
+                  <circle
+                    cx={cx + pinSizes.shadowOffset}
+                    cy={cy + pinSizes.shadowOffset}
+                    r={pinSizes.r}
+                    fill="rgba(0,0,0,0.2)"
+                    className="pointer-events-none"
+                  />
+                  <circle cx={cx} cy={cy} r={pinSizes.r} fill={isSelected ? "#2563eb" : "#18181b"} stroke="white" strokeWidth={pinSizes.stroke} />
+                  <text
+                    x={cx}
+                    y={cy + 5 * legacyScale.scale}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill="white"
+                    fontSize={pinSizes.fontSize}
+                    fontWeight="bold"
+                    fontFamily="system-ui, sans-serif"
+                    className="pointer-events-none select-none"
+                  >
+                    {mod.number}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
       </div>
 
       {/* Panneau d'information */}
@@ -260,6 +375,7 @@ export default function InteractiveFloorPlan() {
                   background: zone.hoverColor,
                 }}
                 aria-label={`Sélectionner la zone : ${zone.name}`}
+                onClick={() => handleZoneClick(zone)}
               >
                 <div className="flex items-start">
                   <div className="min-w-0">
