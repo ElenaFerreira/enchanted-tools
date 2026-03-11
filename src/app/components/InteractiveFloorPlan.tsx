@@ -180,24 +180,27 @@ export default function InteractiveFloorPlan() {
     (zone: Zone) => {
       setSelectedModule(null);
       setSelectedZone(null);
-      setZoomedZoneId((current) => (current === zone.id ? null : zone.id));
+
+      const isTogglingOff = zoomedZoneId === zone.id;
+      setZoomedZoneId(isTogglingOff ? null : zone.id);
 
       const container = sliderRef.current;
-      if (!container) return;
+      if (!container || !zones.length) return;
 
-      const index = zones.findIndex((z) => z.id === zone.id);
-      if (index === -1 || !zones.length) return;
+      const targetIndex = isTogglingOff ? 0 : zones.findIndex((z) => z.id === zone.id);
+      if (targetIndex < 0) return;
 
       const { scrollWidth, clientWidth } = container;
       if (!scrollWidth || !clientWidth) return;
 
       const slideWidth = scrollWidth / zones.length;
+      setActiveSlideIndex(targetIndex);
       container.scrollTo({
-        left: index * slideWidth,
+        left: targetIndex * slideWidth,
         behavior: "smooth",
       });
     },
-    [zones],
+    [zones, zoomedZoneId],
   );
 
   const handleClosePanel = useCallback(() => {
