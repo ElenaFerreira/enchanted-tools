@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Maximize2, Pause, Play } from "lucide-react";
+import { PrimaryCTA } from "../components/PrimaryCTA";
 
 export default function IntroPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -33,15 +33,6 @@ export default function IntroPage() {
       video.pause();
       setIsPlaying(false);
     }
-  }, []);
-
-  const handleStop = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.pause();
-    video.currentTime = 0;
-    setIsPlaying(false);
-    setCurrentTime(0);
   }, []);
 
   useEffect(() => {
@@ -168,17 +159,7 @@ export default function IntroPage() {
         </div>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center">
-          <Link
-            href="/plan"
-            className="pointer-events-auto w-full max-w-xs px-4 py-3 text-center text-base font-medium text-zinc-900 shadow-sm"
-            style={{
-              borderRadius: 16,
-              background: "var(--Neutral-25, #FDFDFD)",
-            }}
-            aria-label="Passer au plan"
-          >
-            Suivant
-          </Link>
+          <PrimaryCTA href="/onboarding/contexte" label="Suivant" ariaLabel="Passer à l’étape suivante" />
         </div>
       </main>
     </div>
