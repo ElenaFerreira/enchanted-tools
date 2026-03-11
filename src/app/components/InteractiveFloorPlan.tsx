@@ -133,7 +133,7 @@ export default function InteractiveFloorPlan() {
   }, [zoomedZoneId, zoneCenters, vb.width, vb.height, isDesktop]);
 
   const pinSizes = useMemo(() => {
-    const factor = isDesktop ? 1 : 2;
+    const factor = isDesktop ? 1 : 2.5;
     const r = 70 * legacyScale.scale * factor;
     const ring = 90 * legacyScale.scale * factor;
     const ringSelected = 110 * legacyScale.scale * factor;
@@ -180,27 +180,25 @@ export default function InteractiveFloorPlan() {
     (zone: Zone) => {
       setSelectedModule(null);
       setSelectedZone(null);
-
-      const isTogglingOff = zoomedZoneId === zone.id;
-      setZoomedZoneId(isTogglingOff ? null : zone.id);
+      setZoomedZoneId((current) => (current === zone.id ? null : zone.id));
 
       const container = sliderRef.current;
       if (!container || !zones.length) return;
 
-      const targetIndex = isTogglingOff ? 0 : zones.findIndex((z) => z.id === zone.id);
-      if (targetIndex < 0) return;
+      const index = zones.findIndex((z) => z.id === zone.id);
+      if (index === -1) return;
 
       const { scrollWidth, clientWidth } = container;
       if (!scrollWidth || !clientWidth) return;
 
       const slideWidth = scrollWidth / zones.length;
-      setActiveSlideIndex(targetIndex);
+      setActiveSlideIndex(index);
       container.scrollTo({
-        left: targetIndex * slideWidth,
+        left: index * slideWidth,
         behavior: "smooth",
       });
     },
-    [zones, zoomedZoneId],
+    [zones],
   );
 
   const handleClosePanel = useCallback(() => {
