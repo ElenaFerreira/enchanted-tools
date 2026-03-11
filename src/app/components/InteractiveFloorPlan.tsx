@@ -50,9 +50,11 @@ export default function InteractiveFloorPlan() {
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const [activeModuleSlideIndex, setActiveModuleSlideIndex] = useState(0);
   const [zoomedZoneId, setZoomedZoneId] = useState<string | null>(null);
   const zoneCardRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const sliderRef = useRef<HTMLDivElement | null>(null);
+  const moduleSliderRef = useRef<HTMLDivElement | null>(null);
 
   const vb = isDesktop ? DESKTOP_VB : MOBILE_VB;
   const zones = isDesktop ? ZONES_DESKTOP : ZONES_MOBILE;
@@ -154,14 +156,14 @@ export default function InteractiveFloorPlan() {
       const withNewColumns = await supabase
         .from("modules")
         .select(
-          "id, number, name, description, media_type, images, position_x, position_y, position_x_mobile, position_y_mobile, position_x_desktop, position_y_desktop",
+          "id, number, name, description, media_type, media_url, images, position_x, position_y, position_x_mobile, position_y_mobile, position_x_desktop, position_y_desktop",
         )
         .order("number", { ascending: true });
 
       if (withNewColumns.error) {
         const legacy = await supabase
           .from("modules")
-          .select("id, number, name, description, media_type, images, position_x, position_y")
+          .select("id, number, name, description, media_type, media_url, images, position_x, position_y")
           .order("number", { ascending: true });
         if (legacy.data) setModules(legacy.data as Module[]);
         return;
@@ -173,7 +175,7 @@ export default function InteractiveFloorPlan() {
 
   const handleModuleClick = useCallback((mod: Module) => {
     setSelectedZone(null);
-    setSelectedModule((prev) => (prev?.id === mod.id ? null : mod));
+    setSelectedModule(mod);
   }, []);
 
   const handleZoneClick = useCallback(
@@ -237,6 +239,40 @@ export default function InteractiveFloorPlan() {
       }),
     [modules, isDesktop, legacyScale.scaleX, legacyScale.scaleY, zones],
   );
+
+  const modulesInActiveZone = useMemo(
+    () => modulesWithZone.filter(({ zoneId }) => zoneId && zoneId === zoomedZoneId),
+    [modulesWithZone, zoomedZoneId],
+  );
+
+  useEffect(() => {
+    if (!modulesInActiveZone.length) return;
+    const current = modulesInActiveZone[activeModuleSlideIndex]?.mod;
+    if (!current) return;
+    if (!selectedModule || selectedModule.id !== current.id) {
+      setSelectedModule(current);
+    }
+  }, [modulesInActiveZone, activeModuleSlideIndex, selectedModule]);
+
+  useEffect(() => {
+    if (!modulesInActiveZone.length) return;
+    const container = moduleSliderRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollLeft, clientWidth, scrollWidth } = container;
+      if (!scrollWidth || !clientWidth) return;
+      const slideWidth = scrollWidth / modulesInActiveZone.length;
+      if (!slideWidth) return;
+      const rawIndex = scrollLeft / slideWidth;
+      const nextIndex = Math.min(modulesInActiveZone.length - 1, Math.max(0, Math.round(rawIndex)));
+      setActiveModuleSlideIndex(nextIndex);
+    };
+
+    handleScroll();
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [modulesInActiveZone.length]);
 
   return (
     <div className="relative w-full max-w-6xl mx-auto">
@@ -350,7 +386,7 @@ export default function InteractiveFloorPlan() {
       {/* Panneau d'information */}
       <FloorPlanInfoPanel selectedZone={selectedZone} selectedModule={selectedModule} onClose={handleClosePanel} />
 
-      {/* Slider de zones */}
+      {/* Sliders */}
       <div
         className={[
           "relative z-10 lg:mt-6 lg:max-w-[480px] lg:mx-auto",
@@ -358,62 +394,126 @@ export default function InteractiveFloorPlan() {
           "transition-all duration-300",
         ].join(" ")}
       >
-        {/* Dégradé gauche supprimé */}
-
-        <div
-          ref={sliderRef}
-          className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          aria-label="Parcourir les zones du plan"
-        >
-          {zones.map((zone) => {
-            const tagColor = ZONE_POINT_COLORS[zone.id] ?? "rgba(255, 255, 255, 0.7)";
-            return (
-              <button
-                key={zone.id}
-                ref={(el) => {
-                  zoneCardRefs.current[zone.id] = el;
-                }}
-                className={[
-                  "snap-center shrink-0",
-                  "w-[calc(100%-2rem)] sm:w-[420px] lg:w-full",
-                  "p-3 sm:p-4 text-left shadow-sm backdrop-blur",
-                  "min-h-[80px] sm:min-h-[110px]",
-                  "transition",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
-                ].join(" ")}
-                style={{
-                  borderRadius: 4,
-                  border: `0.3px solid ${zone.borderColor}`,
-                  background: zone.hoverColor,
-                }}
-                aria-label={`Sélectionner la zone : ${zone.name}`}
-                onClick={() => handleZoneClick(zone)}
-              >
-                <div className="flex items-start">
-                  <div className="min-w-0">
-                    <p className="truncate text-xs sm:text-sm font-semibold text-white">{zone.name}</p>
-                    <p className="mt-1 text-xs sm:text-sm text-white/70">{zone.description}</p>
+        {/* Slider de zones (visible quand aucune zone n'est zoomée) */}
+        {!zoomedZoneId && (
+          <>
+            <div
+              ref={sliderRef}
+              className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              aria-label="Parcourir les zones du plan"
+            >
+              {zones.map((zone) => (
+                <button
+                  key={zone.id}
+                  ref={(el) => {
+                    zoneCardRefs.current[zone.id] = el;
+                  }}
+                  className={[
+                    "snap-center shrink-0",
+                    "w-[calc(100%-2rem)] sm:w-[420px] lg:w-full",
+                    "p-3 sm:p-4 text-left shadow-sm backdrop-blur",
+                    "min-h-[80px] sm:min-h-[110px]",
+                    "transition",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+                  ].join(" ")}
+                  style={{
+                    borderRadius: 4,
+                    border: `0.3px solid ${zone.borderColor}`,
+                    background: zone.hoverColor,
+                  }}
+                  aria-label={`Sélectionner la zone : ${zone.name}`}
+                  onClick={() => handleZoneClick(zone)}
+                >
+                  <div className="flex items-start">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs sm:text-sm font-semibold text-white">{zone.name}</p>
+                      <p className="mt-1 text-xs sm:text-sm text-white/70">{zone.description}</p>
+                    </div>
                   </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                </button>
+              ))}
+            </div>
 
-        <div className="mt-3 flex justify-center gap-2">
-          {zones.map((zone, index) => {
-            const isActive = index === activeSlideIndex;
-            return (
-              <span
-                key={zone.id}
-                className="h-1.5 w-1.5 rounded-full"
-                style={{
-                  backgroundColor: isActive ? "rgba(255, 255, 255, 0.61)" : "rgba(255, 255, 255, 0.17)",
-                }}
-              />
-            );
-          })}
-        </div>
+            <div className="mt-3 flex justify-center gap-2">
+              {zones.map((zone, index) => {
+                const isActive = index === activeSlideIndex;
+                return (
+                  <span
+                    key={zone.id}
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{
+                      backgroundColor: isActive ? "rgba(255, 255, 255, 0.61)" : "rgba(255, 255, 255, 0.17)",
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* Slider de modules (visible quand une zone est zoomée) */}
+        {zoomedZoneId && modulesInActiveZone.length > 0 && (
+          <>
+            <div
+              ref={moduleSliderRef}
+              className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              aria-label="Parcourir les modules de la zone sélectionnée"
+            >
+              {modulesInActiveZone.map(({ mod }) => (
+                <button
+                  key={mod.id}
+                  className={[
+                    "snap-center shrink-0",
+                    "w-[calc(100%-2rem)] sm:w-[420px] lg:w-full",
+                    "p-3 sm:p-4 text-left shadow-sm",
+                    "min-h-[80px] sm:min-h-[110px]",
+                    "flex flex-col items-stretch justify-start",
+                    "transition bg-white/85 text-zinc-900",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+                  ].join(" ")}
+                  style={{
+                    borderRadius: 4,
+                    border: "0.3px solid rgba(255,255,255,0.85)",
+                  }}
+                  aria-label={`Sélectionner le module : ${mod.name}`}
+                  onClick={() => handleModuleClick(mod)}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
+                      {mod.number}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-50">{mod.name}</p>
+                      {mod.description && <p className="mt-1 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">{mod.description}</p>}
+                    </div>
+                  </div>
+                  {mod.media_url && (
+                    <div className="mt-3">
+                      <video controls preload="metadata" className="h-auto w-full rounded-lg border border-zinc-200 bg-black dark:border-zinc-700">
+                        <source src={mod.media_url} />
+                      </video>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-3 flex justify-center gap-2">
+              {modulesInActiveZone.map(({ mod }, index) => {
+                const isActive = index === activeModuleSlideIndex;
+                return (
+                  <span
+                    key={mod.id}
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{
+                      backgroundColor: isActive ? "rgba(255, 255, 255, 0.61)" : "rgba(255, 255, 255, 0.17)",
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import type { Module } from "@/lib/types";
 
 interface Zone {
@@ -17,79 +16,34 @@ interface FloorPlanInfoPanelProps {
 }
 
 export function FloorPlanInfoPanel({ selectedZone, selectedModule, onClose }: FloorPlanInfoPanelProps) {
-  const isOpen = selectedZone !== null || selectedModule !== null;
+  const isOpen = selectedZone !== null;
 
   return (
-    <div
-      className={`mt-4 overflow-hidden rounded-xl border transition-all duration-300 ${
-        isOpen
-          ? "max-h-60 opacity-100 border-zinc-200 dark:border-zinc-700"
-          : "max-h-0 opacity-0 border-transparent"
-      }`}
-    >
+    <div className="mt-4 px-4 relative z-20">
+      <div
+        className={`mx-auto w-full sm:w-[420px] lg:max-w-[480px] overflow-hidden transition-all duration-300 ${
+          isOpen ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
+        }`}
+        style={{
+          borderRadius: 4,
+          border: isOpen ? "0.3px solid rgba(228, 228, 231, 1)" : "0.3px solid transparent",
+          background: "#ffffff",
+        }}
+      >
       {/* Info zone */}
       {selectedZone && (
         <div className="flex items-start justify-between gap-4 bg-white p-5 dark:bg-zinc-900">
           <div className="flex-1">
             <div className="flex items-center gap-3">
-              <div
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: selectedZone.borderColor }}
-              />
-              <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100">
-                {selectedZone.name}
-              </h3>
+              <div className="h-3 w-3 rounded-full" style={{ backgroundColor: selectedZone.borderColor }} />
+              <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100">{selectedZone.name}</h3>
             </div>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              {selectedZone.description}
-            </p>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{selectedZone.description}</p>
           </div>
           <CloseButton onClick={onClose} />
         </div>
       )}
-
-      {/* Info module */}
-      {selectedModule && (
-        <div className="flex items-start justify-between gap-4 bg-white p-5 dark:bg-zinc-900">
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
-                {selectedModule.number}
-              </span>
-              <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100">
-                {selectedModule.name}
-              </h3>
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  selectedModule.media_type === "video"
-                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                    : "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
-                }`}
-              >
-                {selectedModule.media_type === "video" ? "Vidéo" : "Audio"}
-              </span>
-            </div>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              {selectedModule.description || "Pas de description disponible."}
-            </p>
-            {selectedModule.images.length > 0 && (
-              <div className="mt-3 flex gap-2 overflow-x-auto">
-                {selectedModule.images.map((img, i) => (
-                  <Image
-                    key={i}
-                    src={img}
-                    alt={`${selectedModule.name} - ${i + 1}`}
-                    width={64}
-                    height={64}
-                    className="shrink-0 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700"
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-          <CloseButton onClick={onClose} />
-        </div>
-      )}
+      </div>
     </div>
   );
 }
