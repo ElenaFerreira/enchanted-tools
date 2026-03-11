@@ -468,12 +468,12 @@ export default function InteractiveFloorPlan() {
                     "p-3 sm:p-4 text-left shadow-sm",
                     "min-h-[80px] sm:min-h-[110px]",
                     "flex flex-col items-stretch justify-start",
-                    "transition bg-white/85 text-zinc-900",
+                    "transition bg-white/60 text-zinc-900 backdrop-blur-sm",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
                   ].join(" ")}
                   style={{
                     borderRadius: 4,
-                    border: "0.3px solid rgba(255,255,255,0.85)",
+                    border: "0.3px solid rgba(255,255,255,0.6)",
                   }}
                   aria-label={`Sélectionner le module : ${mod.name}`}
                   onClick={() => handleModuleClick(mod)}
@@ -489,7 +489,7 @@ export default function InteractiveFloorPlan() {
                   </div>
                   {mod.media_url && (
                     <div className="mt-3">
-                      <video controls preload="metadata" className="h-auto w-full rounded-lg border border-zinc-200 bg-black dark:border-zinc-700">
+                      <video controls preload="metadata" className="h-auto w-full rounded-lg bg-black">
                         <source src={mod.media_url} />
                       </video>
                     </div>
