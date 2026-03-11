@@ -163,7 +163,7 @@ export default function PlanEditor() {
   const selectedModule = modules.find((m) => m.id === selectedId);
 
   return (
-    <div className="flex h-[calc(100vh-120px)] overflow-hidden">
+    <div className="flex flex-col gap-4 lg:flex-row lg:gap-0">
       <PlanEditorSidebar
         loading={loading}
         unplaced={unplaced}
@@ -174,7 +174,7 @@ export default function PlanEditor() {
       />
 
       {/* Zone du plan */}
-      <div className="flex-1 overflow-auto p-6" onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
+      <div className="flex-1 p-4 sm:p-6 overflow-auto" onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
         <div className="mx-auto w-full max-w-5xl">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -206,12 +206,7 @@ export default function PlanEditor() {
             </div>
           </div>
 
-          <div
-            className={[
-              "relative rounded-2xl bg-[#462B7E] p-4",
-              planMode === "mobile" ? "max-w-xs mx-auto" : "",
-            ].join(" ")}
-          >
+          <div className={["relative rounded-2xl bg-[#462B7E] p-4", planMode === "mobile" ? "max-w-xs mx-auto" : ""].join(" ")}>
             <Image
               src={vb.src}
               alt="Plan du niveau -1"
@@ -255,6 +250,7 @@ export default function PlanEditor() {
                   (planMode === "desktop" ? mod.position_y_desktop : mod.position_y_mobile) === null;
                 const cx = isLegacy ? x * legacyScaleX : x;
                 const cy = isLegacy ? y * legacyScaleY : y;
+                const sizeFactor = planMode === "mobile" ? 3 : 2;
                 return (
                   <g
                     key={mod.id}
@@ -268,25 +264,25 @@ export default function PlanEditor() {
                     <circle
                       cx={cx + 4 * legacyScale}
                       cy={cy + 4 * legacyScale}
-                      r={(isSelected ? 90 : 75) * legacyScale}
+                      r={(isSelected ? 90 : 75) * legacyScale * sizeFactor}
                       fill="rgba(0,0,0,0.15)"
                       className="pointer-events-none"
                     />
                     <circle
                       cx={cx}
                       cy={cy}
-                      r={(isSelected ? 90 : 75) * legacyScale}
+                      r={(isSelected ? 90 : 75) * legacyScale * sizeFactor}
                       fill={isSelected ? "#2563eb" : "#18181b"}
                       stroke="white"
                       strokeWidth={(isSelected ? 8 : 5) * legacyScale}
                     />
                     <text
                       x={cx}
-                      y={cy + 6 * legacyScale}
+                      y={cy + 6 * legacyScale * sizeFactor}
                       textAnchor="middle"
                       dominantBaseline="middle"
                       fill="white"
-                      fontSize={(isSelected ? 56 : 48) * legacyScale}
+                      fontSize={(isSelected ? 56 : 48) * legacyScale * sizeFactor}
                       fontWeight="bold"
                       fontFamily="system-ui, sans-serif"
                       className="pointer-events-none select-none"

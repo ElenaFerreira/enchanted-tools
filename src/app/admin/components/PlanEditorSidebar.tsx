@@ -20,7 +20,7 @@ export function PlanEditorSidebar({
   onRemoveFromPlan,
 }: PlanEditorSidebarProps) {
   return (
-    <aside className="w-72 shrink-0 overflow-y-auto border-r border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <aside className="w-full lg:w-72 lg:shrink-0 overflow-y-auto border-b lg:border-b-0 lg:border-r border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
         Modules à placer
       </h3>

@@ -18,8 +18,8 @@ export default async function AdminPage() {
     <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-black">
       {/* Header */}
       <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 dark:bg-zinc-100">
               <svg
                 className="h-4 w-4 text-white dark:text-black"
@@ -40,11 +40,11 @@ export default async function AdminPage() {
                 />
               </svg>
             </div>
-            <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+            <h1 className="truncate text-base font-semibold text-zinc-900 dark:text-zinc-50 sm:text-lg">
               Enchanted Tools — Admin
             </h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <Link
               href="/"
               target="_blank"
@@ -55,7 +55,7 @@ export default async function AdminPage() {
               </svg>
               Voir le plan
             </Link>
-            <span className="text-sm text-zinc-500 dark:text-zinc-400">
+            <span className="hidden max-w-[140px] truncate text-xs text-zinc-500 dark:text-zinc-400 sm:inline-block sm:max-w-xs sm:text-sm">
               {user.email}
             </span>
             <SignOutButton />
