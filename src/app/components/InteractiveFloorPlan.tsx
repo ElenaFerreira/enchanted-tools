@@ -150,6 +150,39 @@ export default function InteractiveFloorPlan() {
     };
   }, [legacyScale.scale, isDesktop]);
 
+  const modulesWithZone = useMemo(
+    () =>
+      modules.map((mod) => {
+        const vbX = isDesktop ? mod.position_x_desktop : mod.position_x_mobile;
+        const vbY = isDesktop ? mod.position_y_desktop : mod.position_y_mobile;
+        const legacyX = mod.position_x;
+        const legacyY = mod.position_y;
+
+        const cx = vbX !== null ? vbX : legacyX !== null ? legacyX * legacyScale.scaleX : null;
+        const cy = vbY !== null ? vbY : legacyY !== null ? legacyY * legacyScale.scaleY : null;
+
+        if (cx === null || cy === null) {
+          return { mod, zoneId: null as string | null, cx: null as number | null, cy: null as number | null };
+        }
+
+        let zoneId: string | null = null;
+        for (const zone of zones) {
+          if (zone.points && isPointInPolygon(cx, cy, zone.points)) {
+            zoneId = zone.id;
+            break;
+          }
+        }
+
+        return { mod, zoneId, cx, cy };
+      }),
+    [modules, isDesktop, legacyScale.scaleX, legacyScale.scaleY, zones],
+  );
+
+  const modulesInActiveZone = useMemo(
+    () => modulesWithZone.filter(({ zoneId }) => zoneId && zoneId === zoomedZoneId),
+    [modulesWithZone, zoomedZoneId],
+  );
+
   useEffect(() => {
     const supabase = createClient();
     (async () => {
@@ -177,6 +210,32 @@ export default function InteractiveFloorPlan() {
     setSelectedZone(null);
     setSelectedModule(mod);
   }, []);
+
+  const handleModulePinClick = useCallback(
+    (mod: Module) => {
+      handleModuleClick(mod);
+
+      if (!modulesInActiveZone.length) return;
+      const container = moduleSliderRef.current;
+      if (!container) return;
+
+      const index = modulesInActiveZone.findIndex(({ mod: m }) => m.id === mod.id);
+      if (index === -1) return;
+
+      const { scrollWidth, clientWidth } = container;
+      if (!scrollWidth || !clientWidth) return;
+
+      const slideWidth = scrollWidth / modulesInActiveZone.length;
+      if (!slideWidth) return;
+
+      setActiveModuleSlideIndex(index);
+      container.scrollTo({
+        left: index * slideWidth,
+        behavior: "smooth",
+      });
+    },
+    [modulesInActiveZone, handleModuleClick],
+  );
 
   const handleZoneClick = useCallback(
     (zone: Zone) => {
@@ -211,39 +270,6 @@ export default function InteractiveFloorPlan() {
     setSelectedZone(null);
     setSelectedModule(null);
   }, []);
-
-  const modulesWithZone = useMemo(
-    () =>
-      modules.map((mod) => {
-        const vbX = isDesktop ? mod.position_x_desktop : mod.position_x_mobile;
-        const vbY = isDesktop ? mod.position_y_desktop : mod.position_y_mobile;
-        const legacyX = mod.position_x;
-        const legacyY = mod.position_y;
-
-        const cx = vbX !== null ? vbX : legacyX !== null ? legacyX * legacyScale.scaleX : null;
-        const cy = vbY !== null ? vbY : legacyY !== null ? legacyY * legacyScale.scaleY : null;
-
-        if (cx === null || cy === null) {
-          return { mod, zoneId: null as string | null, cx: null as number | null, cy: null as number | null };
-        }
-
-        let zoneId: string | null = null;
-        for (const zone of zones) {
-          if (zone.points && isPointInPolygon(cx, cy, zone.points)) {
-            zoneId = zone.id;
-            break;
-          }
-        }
-
-        return { mod, zoneId, cx, cy };
-      }),
-    [modules, isDesktop, legacyScale.scaleX, legacyScale.scaleY, zones],
-  );
-
-  const modulesInActiveZone = useMemo(
-    () => modulesWithZone.filter(({ zoneId }) => zoneId && zoneId === zoomedZoneId),
-    [modulesWithZone, zoomedZoneId],
-  );
 
   useEffect(() => {
     if (!modulesInActiveZone.length) return;
@@ -343,7 +369,7 @@ export default function InteractiveFloorPlan() {
                   className="cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleModuleClick(mod);
+                    handleModulePinClick(mod);
                   }}
                 >
                   <circle
