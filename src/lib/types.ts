@@ -8,6 +8,10 @@ export interface Module {
   images: string[];
   position_x: number | null;
   position_y: number | null;
+  position_x_mobile: number | null;
+  position_y_mobile: number | null;
+  position_x_desktop: number | null;
+  position_y_desktop: number | null;
   zone_id: string | null;
   created_at: string;
   updated_at: string;

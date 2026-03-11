@@ -6,8 +6,13 @@ import type { Module } from "@/lib/types";
 import Image from "next/image";
 import { PlanEditorSidebar } from "./PlanEditorSidebar";
 
-const VB_WIDTH = 7791;
-const VB_HEIGHT = 4500;
+const BASE_VB_WIDTH = 7791;
+const BASE_VB_HEIGHT = 4500;
+
+const MOBILE_VB = { width: 280, height: 513, src: "/mobile-plan.svg" as const };
+const DESKTOP_VB = { width: 1156, height: 630, src: "/desktop-plan.svg" as const };
+
+type PlanMode = "mobile" | "desktop";
 
 export default function PlanEditor() {
   const supabase = createClient();
@@ -17,16 +22,69 @@ export default function PlanEditor() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<{ x: number; y: number } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [planMode, setPlanMode] = useState<PlanMode>("mobile");
 
-  const placed = modules.filter((m) => m.position_x !== null && m.position_y !== null);
-  const unplaced = modules.filter((m) => m.position_x === null || m.position_y === null);
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    setIsDesktop(mql.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    setPlanMode(isDesktop ? "desktop" : "mobile");
+  }, [isDesktop]);
+
+  const vb = planMode === "desktop" ? DESKTOP_VB : MOBILE_VB;
+  const legacyScaleX = vb.width / BASE_VB_WIDTH;
+  const legacyScaleY = vb.height / BASE_VB_HEIGHT;
+  const legacyScale = Math.min(legacyScaleX, legacyScaleY);
+
+  const getPos = useCallback(
+    (m: Module): { x: number | null; y: number | null } => {
+      const x =
+        planMode === "desktop"
+          ? m.position_x_desktop ?? m.position_x
+          : m.position_x_mobile ?? m.position_x;
+      const y =
+        planMode === "desktop"
+          ? m.position_y_desktop ?? m.position_y
+          : m.position_y_mobile ?? m.position_y;
+      return { x, y };
+    },
+    [planMode]
+  );
+
+  const placed = modules.filter((m) => {
+    const { x, y } = getPos(m);
+    return x !== null && y !== null;
+  });
+  const unplaced = modules.filter((m) => {
+    const { x, y } = getPos(m);
+    return x === null || y === null;
+  });
 
   const fetchModules = useCallback(async () => {
-    const { data } = await supabase
+    const withNewColumns = await supabase
       .from("modules")
-      .select("id, number, name, description, media_type, media_url, images, position_x, position_y, zone_id")
+      .select(
+        "id, number, name, description, media_type, media_url, images, position_x, position_y, position_x_mobile, position_y_mobile, position_x_desktop, position_y_desktop, zone_id"
+      )
       .order("number", { ascending: true });
-    setModules((data as Module[]) ?? []);
+
+    if (withNewColumns.error) {
+      const legacy = await supabase
+        .from("modules")
+        .select("id, number, name, description, media_type, media_url, images, position_x, position_y, zone_id")
+        .order("number", { ascending: true });
+      setModules((legacy.data as Module[]) ?? []);
+      setLoading(false);
+      return;
+    }
+
+    setModules((withNewColumns.data as Module[]) ?? []);
     setLoading(false);
   }, [supabase]);
 
@@ -34,28 +92,30 @@ export default function PlanEditor() {
     fetchModules();
   }, [fetchModules]);
 
-  const clientToSvg = useCallback(
+  const clientToVb = useCallback(
     (clientX: number, clientY: number): { x: number; y: number } | null => {
       const svg = svgRef.current;
       if (!svg) return null;
       const rect = svg.getBoundingClientRect();
-      const x = Math.round(((clientX - rect.left) / rect.width) * VB_WIDTH);
-      const y = Math.round(((clientY - rect.top) / rect.height) * VB_HEIGHT);
-      if (x < 0 || x > VB_WIDTH || y < 0 || y > VB_HEIGHT) return null;
+      const x = Math.round(((clientX - rect.left) / rect.width) * vb.width);
+      const y = Math.round(((clientY - rect.top) / rect.height) * vb.height);
+      if (x < 0 || x > vb.width || y < 0 || y > vb.height) return null;
       return { x, y };
     },
-    []
+    [vb.height, vb.width]
   );
 
   const savePosition = useCallback(
     async (moduleId: string, x: number | null, y: number | null) => {
-      await supabase
-        .from("modules")
-        .update({ position_x: x, position_y: y })
-        .eq("id", moduleId);
+      const patch: Partial<Module> =
+        planMode === "desktop"
+          ? { position_x_desktop: x, position_y_desktop: y }
+          : { position_x_mobile: x, position_y_mobile: y };
+
+      await supabase.from("modules").update(patch).eq("id", moduleId);
       fetchModules();
     },
-    [supabase, fetchModules]
+    [supabase, fetchModules, planMode]
   );
 
   const handleDragStart = (e: React.DragEvent, moduleId: string) => {
@@ -67,7 +127,7 @@ export default function PlanEditor() {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    const pos = clientToSvg(e.clientX, e.clientY);
+    const pos = clientToVb(e.clientX, e.clientY);
     if (pos) setDragPreview(pos);
   };
 
@@ -78,7 +138,7 @@ export default function PlanEditor() {
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     const moduleId = e.dataTransfer.getData("moduleId");
-    const pos = clientToSvg(e.clientX, e.clientY);
+    const pos = clientToVb(e.clientX, e.clientY);
     setDragPreview(null);
     setDraggingId(null);
     if (moduleId && pos) {
@@ -93,11 +153,15 @@ export default function PlanEditor() {
     setSelectedId(moduleId);
 
     const handleMove = (ev: PointerEvent) => {
-      const pos = clientToSvg(ev.clientX, ev.clientY);
+      const pos = clientToVb(ev.clientX, ev.clientY);
       if (pos) {
         setModules((prev) =>
           prev.map((m) =>
-            m.id === moduleId ? { ...m, position_x: pos.x, position_y: pos.y } : m
+            m.id === moduleId
+              ? planMode === "desktop"
+                ? { ...m, position_x_desktop: pos.x, position_y_desktop: pos.y }
+                : { ...m, position_x_mobile: pos.x, position_y_mobile: pos.y }
+              : m
           )
         );
       }
@@ -107,7 +171,7 @@ export default function PlanEditor() {
       document.removeEventListener("pointermove", handleMove);
       document.removeEventListener("pointerup", handleUp);
       setDraggingId(null);
-      const pos = clientToSvg(ev.clientX, ev.clientY);
+      const pos = clientToVb(ev.clientX, ev.clientY);
       if (pos) {
         await savePosition(moduleId, pos.x, pos.y);
       }
@@ -137,25 +201,55 @@ export default function PlanEditor() {
 
       {/* Zone du plan */}
       <div
-        className="flex-1 overflow-auto bg-zinc-100 p-6 dark:bg-zinc-900"
+        className="flex-1 overflow-auto p-6"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         <div className="relative mx-auto w-full max-w-5xl">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              Placement des modules — {planMode === "desktop" ? "Desktop" : "Mobile"}
+            </h2>
+            <div className="inline-flex rounded-lg border border-zinc-200 bg-white p-0.5 shadow-sm dark:border-zinc-700 dark:bg-zinc-950">
+              <button
+                type="button"
+                onClick={() => setPlanMode("mobile")}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                  planMode === "mobile"
+                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                    : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                }`}
+              >
+                Mobile
+              </button>
+              <button
+                type="button"
+                onClick={() => setPlanMode("desktop")}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                  planMode === "desktop"
+                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                    : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                }`}
+              >
+                Desktop
+              </button>
+            </div>
+          </div>
           <Image
-            src="/plan-1.png"
+            src={vb.src}
             alt="Plan du niveau -1"
-            width={7791}
-            height={4500}
-            className="block w-full h-auto rounded-xl shadow-lg"
+            width={vb.width}
+            height={vb.height}
+            className="block w-full h-auto"
+            sizes="(min-width: 1024px) 1156px, 100vw"
             priority
           />
 
           {/* SVG overlay avec les pins */}
           <svg
             ref={svgRef}
-            viewBox={`0 0 ${VB_WIDTH} ${VB_HEIGHT}`}
+            viewBox={`0 0 ${vb.width} ${vb.height}`}
             className="absolute inset-0 h-full w-full"
             preserveAspectRatio="xMinYMin meet"
             onClick={() => setSelectedId(null)}
@@ -165,10 +259,10 @@ export default function PlanEditor() {
               <circle
                 cx={dragPreview.x}
                 cy={dragPreview.y}
-                r={80}
+                r={80 * legacyScale}
                 fill="rgba(59, 130, 246, 0.25)"
                 stroke="rgba(59, 130, 246, 0.6)"
-                strokeWidth={4}
+                strokeWidth={4 * legacyScale}
                 strokeDasharray="12 6"
                 className="pointer-events-none"
               />
@@ -178,6 +272,13 @@ export default function PlanEditor() {
             {placed.map((mod) => {
               const isSelected = selectedId === mod.id;
               const isDragging = draggingId === mod.id;
+              const { x, y } = getPos(mod);
+              if (x === null || y === null) return null;
+              const isLegacy =
+                (planMode === "desktop" ? mod.position_x_desktop : mod.position_x_mobile) === null ||
+                (planMode === "desktop" ? mod.position_y_desktop : mod.position_y_mobile) === null;
+              const cx = isLegacy ? x * legacyScaleX : x;
+              const cy = isLegacy ? y * legacyScaleY : y;
               return (
                 <g
                   key={mod.id}
@@ -189,27 +290,27 @@ export default function PlanEditor() {
                   }}
                 >
                   <circle
-                    cx={(mod.position_x ?? 0) + 4}
-                    cy={(mod.position_y ?? 0) + 4}
-                    r={isSelected ? 90 : 75}
+                    cx={cx + 4 * legacyScale}
+                    cy={cy + 4 * legacyScale}
+                    r={(isSelected ? 90 : 75) * legacyScale}
                     fill="rgba(0,0,0,0.15)"
                     className="pointer-events-none"
                   />
                   <circle
-                    cx={mod.position_x ?? 0}
-                    cy={mod.position_y ?? 0}
-                    r={isSelected ? 90 : 75}
+                    cx={cx}
+                    cy={cy}
+                    r={(isSelected ? 90 : 75) * legacyScale}
                     fill={isSelected ? "#2563eb" : "#18181b"}
                     stroke="white"
-                    strokeWidth={isSelected ? 8 : 5}
+                    strokeWidth={(isSelected ? 8 : 5) * legacyScale}
                   />
                   <text
-                    x={mod.position_x ?? 0}
-                    y={(mod.position_y ?? 0) + 6}
+                    x={cx}
+                    y={cy + 6 * legacyScale}
                     textAnchor="middle"
                     dominantBaseline="middle"
                     fill="white"
-                    fontSize={isSelected ? 56 : 48}
+                    fontSize={(isSelected ? 56 : 48) * legacyScale}
                     fontWeight="bold"
                     fontFamily="system-ui, sans-serif"
                     className="pointer-events-none select-none"

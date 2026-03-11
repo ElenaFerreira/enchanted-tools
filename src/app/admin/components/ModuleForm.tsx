@@ -34,6 +34,10 @@ export default function ModuleForm({ module, defaultNumber = 1, onSave, onCancel
         images,
         position_x: module?.position_x ?? null,
         position_y: module?.position_y ?? null,
+        position_x_mobile: module?.position_x_mobile ?? null,
+        position_y_mobile: module?.position_y_mobile ?? null,
+        position_x_desktop: module?.position_x_desktop ?? null,
+        position_y_desktop: module?.position_y_desktop ?? null,
         zone_id: module?.zone_id ?? null,
       });
     } finally {

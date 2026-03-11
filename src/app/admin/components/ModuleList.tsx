@@ -18,11 +18,24 @@ export default function ModuleList() {
     : 1;
 
   const fetchModules = useCallback(async () => {
-    const { data } = await supabase
+    const withNewColumns = await supabase
       .from("modules")
-      .select("id, number, name, description, media_type, media_url, images, position_x, position_y, zone_id")
+      .select(
+        "id, number, name, description, media_type, media_url, images, position_x, position_y, position_x_mobile, position_y_mobile, position_x_desktop, position_y_desktop, zone_id"
+      )
       .order("number", { ascending: true });
-    setModules((data as Module[]) ?? []);
+
+    if (withNewColumns.error) {
+      const legacy = await supabase
+        .from("modules")
+        .select("id, number, name, description, media_type, media_url, images, position_x, position_y, zone_id")
+        .order("number", { ascending: true });
+      setModules((legacy.data as Module[]) ?? []);
+      setLoading(false);
+      return;
+    }
+
+    setModules((withNewColumns.data as Module[]) ?? []);
     setLoading(false);
   }, [supabase]);
 
@@ -31,10 +44,24 @@ export default function ModuleList() {
   }, [fetchModules]);
 
   const handleSave = async (data: ModuleInsert) => {
+    const legacyData = (({
+      position_x_mobile: _pxm,
+      position_y_mobile: _pym,
+      position_x_desktop: _pxd,
+      position_y_desktop: _pyd,
+      ...rest
+    }) => rest)(data);
+
     if (editingModule === null) {
-      await supabase.from("modules").insert(data);
+      const res = await supabase.from("modules").insert(data);
+      if (res.error) {
+        await supabase.from("modules").insert(legacyData);
+      }
     } else if (editingModule) {
-      await supabase.from("modules").update(data).eq("id", editingModule.id);
+      const res = await supabase.from("modules").update(data).eq("id", editingModule.id);
+      if (res.error) {
+        await supabase.from("modules").update(legacyData).eq("id", editingModule.id);
+      }
     }
     setEditingModule(undefined);
     fetchModules();
@@ -158,7 +185,9 @@ export default function ModuleList() {
                 >
                   {mod.media_type === "video" ? "Vidéo" : "Audio"}
                 </span>
-                {mod.position_x !== null && (
+                {(mod.position_x_mobile !== null ||
+                  mod.position_x_desktop !== null ||
+                  mod.position_x !== null) && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-950 dark:text-green-300">
                     Placé
                   </span>
