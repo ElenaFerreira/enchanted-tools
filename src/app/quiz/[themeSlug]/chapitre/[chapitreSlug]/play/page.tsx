@@ -68,8 +68,6 @@ export default function QuizChapitrePlayPage() {
   const [secondsLeft, setSecondsLeft] = useState(QUESTION_TIME_SECONDS);
   const [hasSeenHintForCurrentQuestion, setHasSeenHintForCurrentQuestion] = useState(false);
 
-  const pickNextQuestionId = useCallback((ids: string[], all: QuestionRow[]) => all.find((q) => !ids.includes(q.id))?.id ?? null, []);
-
   useEffect(() => {
     const id = window.setTimeout(() => setMounted(true), 0);
     return () => window.clearTimeout(id);
@@ -136,7 +134,10 @@ export default function QuizChapitrePlayPage() {
         setLoading(false);
         return;
       }
-      setQuestions(loaded);
+
+      const randomQuestion = loaded[Math.floor(Math.random() * loaded.length)] ?? null;
+      const questionsForSession = randomQuestion ? [randomQuestion] : [];
+      setQuestions(questionsForSession);
 
       const local = loadQuizState();
       const s1 = startTheme(local, themeSlug);
@@ -145,7 +146,7 @@ export default function QuizChapitrePlayPage() {
       setRhunes(s2.rhunes);
       setAnsweredIds(s2.answeredQuestionIds);
 
-      const firstId = pickNextQuestionId(s2.answeredQuestionIds, loaded);
+      const firstId = randomQuestion?.id ?? null;
       setActiveQuestionId(firstId);
       setPhase(firstId ? "countdown" : "chapterComplete");
       setCountdown(3);
@@ -155,7 +156,7 @@ export default function QuizChapitrePlayPage() {
     return () => {
       cancelled = true;
     };
-  }, [audience, chapitreSlug, pickNextQuestionId, themeSlug]);
+  }, [audience, chapitreSlug, themeSlug]);
 
   const activeQuestion = useMemo(
     () => (activeQuestionId ? (questions.find((q) => q.id === activeQuestionId) ?? null) : null),
@@ -229,15 +230,9 @@ export default function QuizChapitrePlayPage() {
   }, [phase, secondsLeft]);
 
   const goNextQuestion = useCallback(() => {
-    const nextId = pickNextQuestionId(answeredIds, questions);
-    setActiveQuestionId(nextId);
-    if (!nextId) {
-      setPhase("chapterComplete");
-      return;
-    }
-    setCountdown(3);
-    setPhase("countdown");
-  }, [answeredIds, pickNextQuestionId, questions]);
+    setActiveQuestionId(null);
+    setPhase("chapterComplete");
+  }, []);
 
   const applyCorrectAnswer = useCallback(() => {
     if (!activeQuestion) return;
