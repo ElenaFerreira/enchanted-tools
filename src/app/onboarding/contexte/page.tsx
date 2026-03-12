@@ -66,7 +66,7 @@ export default function ContextePage() {
 
       <footer className="w-full px-6 pb-6">
         <div className="flex justify-center">
-          <PrimaryCTA href="/onboarding/joueurs" label="Continuer" disabled={!selected} />
+          <PrimaryCTA href="/onboarding/joueurs" label="Valider" disabled={!selected} />
         </div>
       </footer>
     </div>

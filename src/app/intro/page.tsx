@@ -182,7 +182,7 @@ export default function IntroPage() {
         </div>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center">
-          <PrimaryCTA href="/onboarding/contexte" label="Suivant" ariaLabel="Passer à l’étape suivante" />
+          <PrimaryCTA href="/onboarding/contexte" label="Continuer" ariaLabel="Passer à l’étape suivante" />
         </div>
       </main>
     </div>
