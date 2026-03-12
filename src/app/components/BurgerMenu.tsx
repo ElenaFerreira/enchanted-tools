@@ -1,15 +1,58 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { Gamepad2, Menu, Map, Settings } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronDown,
+  Gamepad2,
+  Info,
+  MapPin,
+  Menu,
+  Settings,
+  Wine,
+  X,
+} from "lucide-react";
 
 const menuButtonClass =
   "flex h-9 w-9 items-center justify-center rounded-full border text-white";
 const menuButtonStyle = {
   borderRadius: 80,
-  borderColor: "var(--Neutral-25, #FDFDFD)",
 };
+
+const menuItems = [
+  {
+    label: "Plan",
+    href: "/plan",
+    icon: MapPin,
+  },
+  {
+    label: "Quizz",
+    href: "/quiz",
+    icon: Gamepad2,
+  },
+  {
+    label: "Nos offres",
+    href: "/offres",
+    icon: Wine,
+  },
+  {
+    label: "Mirokai Experience",
+    href: "/mirokai-experience",
+    icon: CalendarDays,
+  },
+  {
+    label: "À propos",
+    href: "/a-propos",
+    icon: Info,
+  },
+  {
+    label: "Admin",
+    href: "/admin",
+    icon: Settings,
+  },
+] as const;
 
 export function BurgerMenu() {
   const [open, setOpen] = useState(false);
@@ -20,66 +63,46 @@ export function BurgerMenu() {
     <>
       <button
         type="button"
-        aria-label="Ouvrir le menu"
+        aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
         aria-expanded={open}
         aria-haspopup="true"
-        className={menuButtonClass}
+        className={`${menuButtonClass} ${
+          open ? "z-50 border-black bg-white text-zinc-900" : "border-white/60"
+        }`}
         style={menuButtonStyle}
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen((current) => !current)}
       >
-        <Menu className="h-4 w-4" />
+        {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
       </button>
 
       {open && (
         <>
-          <div
-            role="presentation"
-            className="fixed inset-0 z-40 bg-black/50 transition-opacity"
-            aria-hidden="true"
-            onClick={close}
-          />
-          <div
-            role="dialog"
-            aria-label="Menu de navigation"
-            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-xs flex-col gap-2 border-l border-white/20 bg-[#462B7E]/95 p-6 pt-16 shadow-xl backdrop-blur-md"
-            style={{ borderRadius: "16px 0 0 16px" }}
-          >
-            <Link
-              href="/quiz"
-              onClick={close}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium text-white transition-colors hover:bg-white/15"
-              style={{
-                background: "rgba(253, 253, 253, 0.15)",
-                backdropFilter: "blur(10px)",
-              }}
-            >
-              <Gamepad2 className="h-5 w-5 shrink-0" aria-hidden />
-              Quizz
-            </Link>
-            <Link
-              href="/plan"
-              onClick={close}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium text-white transition-colors hover:bg-white/15"
-              style={{
-                background: "rgba(253, 253, 253, 0.15)",
-                backdropFilter: "blur(10px)",
-              }}
-            >
-              <Map className="h-5 w-5 shrink-0" aria-hidden />
-              Plan
-            </Link>
-            <Link
-              href="/admin"
-              onClick={close}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium text-white transition-colors hover:bg-white/15"
-              style={{
-                background: "rgba(253, 253, 253, 0.15)",
-                backdropFilter: "blur(10px)",
-              }}
-            >
-              <Settings className="h-5 w-5 shrink-0" aria-hidden />
-              Admin
-            </Link>
+          <div role="presentation" className="fixed inset-0 z-40 bg-black/40" aria-hidden="true" onClick={close} />
+          <div role="dialog" aria-label="Menu de navigation" className="fixed inset-0 z-40 flex flex-col bg-white px-6 pb-10 pt-8 text-zinc-950">
+            <div className="flex items-center">
+              <Image src="/Logo Enchanted Tools.png" alt="Logo Enchanted Tools" width={150} height={40} priority />
+            </div>
+
+            <nav className="mt-10 flex flex-col gap-1">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={close}
+                    className="flex items-center justify-between rounded-xl px-4 py-4 text-base font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className="h-5 w-5 text-zinc-700" aria-hidden />
+                      <span>{item.label}</span>
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-zinc-500" aria-hidden />
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
         </>
       )}

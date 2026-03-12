@@ -162,6 +162,13 @@ export default function QuizChapitrePlayPage() {
     [activeQuestionId, questions],
   );
 
+  const questionProgress = useMemo(() => {
+    if (phase !== "question") return 0;
+    const elapsed = QUESTION_TIME_SECONDS - secondsLeft;
+    const clamped = Math.max(0, Math.min(QUESTION_TIME_SECONDS, elapsed));
+    return clamped / QUESTION_TIME_SECONDS;
+  }, [phase, secondsLeft]);
+
   useEffect(() => {
     setHasSeenHintForCurrentQuestion(false);
   }, [activeQuestionId]);
@@ -360,7 +367,7 @@ export default function QuizChapitrePlayPage() {
                         className="h-full"
                         style={{
                           backgroundColor: "#FFCA44",
-                          width: `${Math.max(0, Math.min(1, secondsLeft / QUESTION_TIME_SECONDS)) * 100}%`,
+                          width: `${questionProgress * 100}%`,
                         }}
                       />
                     </div>
