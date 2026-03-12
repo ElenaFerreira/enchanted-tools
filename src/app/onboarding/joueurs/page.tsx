@@ -3,25 +3,31 @@
 import { useState, useEffect, FormEvent } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import type { OnboardingPlayer } from "@/lib/types";
+import { createOnboardingPlayer, ONBOARDING_PLAYERS_KEY, parseStoredPlayers } from "@/lib/onboarding";
 import { BurgerMenu } from "../../components/BurgerMenu";
 import { PrimaryCTA } from "../../components/PrimaryCTA";
 
 export default function JoueursPage() {
   const [name, setName] = useState("");
-  const [players, setPlayers] = useState<string[]>([]);
+  const [players, setPlayers] = useState<OnboardingPlayer[]>([]);
+
+  useEffect(() => {
+    setPlayers(parseStoredPlayers(typeof window !== "undefined" ? localStorage.getItem(ONBOARDING_PLAYERS_KEY) : null));
+  }, []);
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) return;
-    setPlayers((prev) => [...prev, trimmed]);
+    setPlayers((prev) => [...prev, createOnboardingPlayer(trimmed)]);
     setName("");
   };
 
   useEffect(() => {
     if (!players.length) return;
     try {
-      localStorage.setItem("onboarding_players", JSON.stringify(players));
+      localStorage.setItem(ONBOARDING_PLAYERS_KEY, JSON.stringify(players));
     } catch {
       // stockage non critique, on ignore les erreurs
     }
@@ -64,9 +70,9 @@ export default function JoueursPage() {
         </form>
 
         <div className="mt-6 flex w-full max-w-sm flex-col gap-3">
-          {players.map((player, index) => (
+          {players.map((player) => (
             <div
-              key={`${player}-${index}`}
+              key={player.id}
               className="w-full rounded-2xl px-4 py-3 text-base font-medium text-white border-2 border-transparent"
               style={{
                 borderRadius: 16,
@@ -74,7 +80,7 @@ export default function JoueursPage() {
                 backdropFilter: "blur(15px)",
               }}
             >
-              {player}
+              {player.name}
             </div>
           ))}
         </div>

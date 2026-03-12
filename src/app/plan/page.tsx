@@ -1,9 +1,21 @@
 "use client";
 
+import { useEffect } from "react";
+import { ONBOARDING_PLAYERS_KEY } from "@/lib/onboarding";
 import { BurgerMenu } from "../components/BurgerMenu";
 import InteractiveFloorPlan from "../components/InteractiveFloorPlan";
 
 export default function PlanPage() {
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(ONBOARDING_PLAYERS_KEY);
+      }
+    } catch {
+      // stockage non critique, on ignore les erreurs
+    }
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col items-center font-sans">
       <header className="flex w-full items-center justify-end px-6 py-4">

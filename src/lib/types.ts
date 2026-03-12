@@ -1,3 +1,8 @@
+export interface OnboardingPlayer {
+  id: string;
+  name: string;
+}
+
 export interface Module {
   id: string;
   number: number;

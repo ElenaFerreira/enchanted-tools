@@ -75,20 +75,35 @@ export default function IntroPage() {
 
   const remaining = duration - currentTime;
 
-  const handleSeek = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
+  const seekToPosition = useCallback(
+    (clientX: number, element: HTMLDivElement) => {
       const video = videoRef.current;
       if (!video || duration <= 0) return;
-
-      const rect = event.currentTarget.getBoundingClientRect();
-      const x = event.clientX - rect.left;
+      const rect = element.getBoundingClientRect();
+      const x = clientX - rect.left;
       const ratio = Math.min(1, Math.max(0, x / rect.width));
       const nextTime = ratio * duration;
-
       video.currentTime = nextTime;
       setCurrentTime(nextTime);
     },
     [duration],
+  );
+
+  const handleSeekClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      seekToPosition(event.clientX, event.currentTarget);
+    },
+    [seekToPosition],
+  );
+
+  const handleSeekTouch = useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      const touch = event.changedTouches[0] ?? event.touches[0];
+      if (!touch) return;
+      event.preventDefault();
+      seekToPosition(touch.clientX, event.currentTarget);
+    },
+    [seekToPosition],
   );
 
   return (
@@ -130,21 +145,21 @@ export default function IntroPage() {
 
             <div className="space-y-1.5">
               <div
-                className="relative h-1.5 w-full rounded-full bg-white/20"
+                className="relative flex min-h-11 w-full cursor-pointer items-center touch-none"
                 role="slider"
                 aria-label="Position de la vidéo"
                 aria-valuemin={0}
                 aria-valuemax={duration || 0}
                 aria-valuenow={currentTime}
-                onClick={handleSeek}
+                onClick={handleSeekClick}
+                onTouchEnd={handleSeekTouch}
               >
-                <div className="h-1.5 rounded-full bg-white" style={{ width: `${progress * 100}%` }} />
+                <div className="h-1.5 w-full rounded-full bg-white/20">
+                  <div className="h-1.5 rounded-full bg-white" style={{ width: `${progress * 100}%` }} />
+                </div>
                 <div
-                  className="absolute top-1/2 h-3 w-3 rounded-full bg-white shadow-sm"
-                  style={{
-                    left: `${progress * 100}%`,
-                    transform: "translate(-50%, -50%)",
-                  }}
+                  className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white shadow-sm pointer-events-none"
+                  style={{ left: `${progress * 100}%`, transform: "translate(-50%, -50%)" }}
                 />
               </div>
               <div className="flex justify-between text-[10px] text-white/60">

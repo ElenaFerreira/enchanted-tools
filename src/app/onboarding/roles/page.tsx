@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import type { OnboardingPlayer } from "@/lib/types";
+import { ONBOARDING_PLAYERS_KEY, parseStoredPlayers } from "@/lib/onboarding";
 import { BurgerMenu } from "../../components/BurgerMenu";
 import { PrimaryCTA } from "../../components/PrimaryCTA";
 
@@ -11,30 +13,22 @@ const ROLE_OPTIONS = ["Le père", "La mère", "L’enfant", "Le grand-parent", "
 type Role = (typeof ROLE_OPTIONS)[number];
 
 export default function RolesPage() {
-  const [players, setPlayers] = useState<string[]>([]);
+  const [players, setPlayers] = useState<OnboardingPlayer[]>([]);
   const [roles, setRoles] = useState<Record<string, Role | null>>({});
 
   useEffect(() => {
-    try {
-      const raw = typeof window !== "undefined" ? localStorage.getItem("onboarding_players") : null;
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as unknown;
-      if (!Array.isArray(parsed)) return;
-      const valid = parsed.filter((p): p is string => typeof p === "string" && p.trim().length > 0);
-      setPlayers(valid);
-      setRoles((prev) => {
-        const next: Record<string, Role | null> = {};
-        for (const p of valid) {
-          next[p] = (prev[p] as Role | null) ?? null;
-        }
-        return next;
-      });
-    } catch {
-      // ignore invalid storage
-    }
+    const valid = parseStoredPlayers(typeof window !== "undefined" ? localStorage.getItem(ONBOARDING_PLAYERS_KEY) : null);
+    setPlayers(valid);
+    setRoles((prev) => {
+      const next: Record<string, Role | null> = {};
+      for (const p of valid) {
+        next[p.id] = (prev[p.id] as Role | null) ?? null;
+      }
+      return next;
+    });
   }, []);
 
-  const allAssigned = useMemo(() => players.length > 0 && players.every((p) => Boolean(roles[p])), [players, roles]);
+  const allAssigned = useMemo(() => players.length > 0 && players.every((p) => Boolean(roles[p.id])), [players, roles]);
 
   return (
     <div className="flex min-h-dvh flex-col items-center py-6">
@@ -58,11 +52,11 @@ export default function RolesPage() {
         <h1 className="mb-8 text-center text-2xl font-semibold text-white">Quels sont leurs rôles&nbsp;?</h1>
 
         <div className="grid w-full max-w-sm grid-cols-2 gap-4">
-          {players.map((player, index) => {
-            const selectedRole = roles[player] ?? null;
+          {players.map((player) => {
+            const selectedRole = roles[player.id] ?? null;
             return (
               <div
-                key={`${player}-${index}`}
+                key={player.id}
                 className={[
                   "flex flex-col justify-between rounded-2xl px-3 py-3 text-sm font-medium text-white border-2",
                   selectedRole ? "border-white" : "border-transparent",
@@ -73,7 +67,7 @@ export default function RolesPage() {
                   backdropFilter: "blur(15px)",
                 }}
               >
-                <div className="mb-2 text-center text-base font-semibold">{player}</div>
+                <div className="mb-2 text-center text-base font-semibold">{player.name}</div>
                 <select
                   className="mt-auto w-full rounded-xl bg-transparent px-2 py-1 text-xs text-white outline-none border border-white/40"
                   value={selectedRole ?? ""}
@@ -81,7 +75,7 @@ export default function RolesPage() {
                     const value = event.target.value as Role | "";
                     setRoles((prev) => ({
                       ...prev,
-                      [player]: value ? (value as Role) : null,
+                      [player.id]: value ? (value as Role) : null,
                     }));
                   }}
                 >
