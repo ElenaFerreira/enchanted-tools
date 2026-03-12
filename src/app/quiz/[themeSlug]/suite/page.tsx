@@ -46,9 +46,9 @@ export default function QuizThemeSuitePage() {
       }
       const themes = (themesRes.data as ThemeRow[]) ?? [];
       const idx = themes.findIndex((t) => t.slug === themeSlug);
-      const next = idx >= 0 ? themes[idx + 1]?.slug ?? null : null;
+      const next = idx >= 0 ? (themes[idx + 1]?.slug ?? null) : null;
       setNextThemeSlug(next);
-      setCurrentTheme(idx >= 0 ? themes[idx] ?? null : null);
+      setCurrentTheme(idx >= 0 ? (themes[idx] ?? null) : null);
       setLoading(false);
     })();
     return () => {
@@ -75,10 +75,19 @@ export default function QuizThemeSuitePage() {
 
   const nextHref = useMemo(() => {
     if (!nextThemeSlug) return "/quiz/termine";
-    if (currentTheme && typeof currentTheme.ordre === "number" && currentTheme.ordre === 1) {
-      return `/quiz/transition/1-2?nextTheme=${encodeURIComponent(nextThemeSlug)}`;
+    if (!currentTheme || typeof currentTheme.ordre !== "number") {
+      return `/quiz/${encodeURIComponent(nextThemeSlug)}/intro`;
     }
-    return `/quiz/${encodeURIComponent(nextThemeSlug)}/intro`;
+    switch (currentTheme.ordre) {
+      case 1:
+        return `/quiz/transition/1-2?nextTheme=${encodeURIComponent(nextThemeSlug)}`;
+      case 2:
+        return `/quiz/transition/2-3?nextTheme=${encodeURIComponent(nextThemeSlug)}`;
+      case 3:
+        return `/quiz/transition/3-4?nextTheme=${encodeURIComponent(nextThemeSlug)}`;
+      default:
+        return `/quiz/${encodeURIComponent(nextThemeSlug)}/intro`;
+    }
   }, [currentTheme, nextThemeSlug]);
 
   return (
@@ -111,20 +120,6 @@ export default function QuizThemeSuitePage() {
             <div className="flex w-full flex-1 flex-col items-center">
               <div className="flex flex-1 flex-col items-center justify-center px-6 gap-4">
                 <p
-                  className="text-center"
-                  style={{
-                    color: "var(--Neutral-25, #FDFDFD)",
-                    fontFamily:
-                      '"Acumin Variable Concept", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontSize: 24,
-                    fontStyle: "normal",
-                    fontWeight: 500,
-                    lineHeight: "32px",
-                  }}
-                >
-                  +10 rhunes
-                </p>
-                <p
                   className="whitespace-pre-line text-center text-white"
                   style={{ fontSize: 24, fontStyle: "normal", fontWeight: 500, lineHeight: "32px" }}
                 >
@@ -137,16 +132,10 @@ export default function QuizThemeSuitePage() {
 
         <footer className="w-full px-6 pb-0">
           <div className="mb-6 flex justify-center">
-            <PrimaryCTA
-              href={nextHref}
-              label="Je continue"
-              ariaLabel="Passer au thème suivant"
-              disabled={loading || Boolean(error)}
-            />
+            <PrimaryCTA href={nextHref} label="Je continue" ariaLabel="Passer au thème suivant" disabled={loading || Boolean(error)} />
           </div>
         </footer>
       </div>
     </div>
   );
 }
-

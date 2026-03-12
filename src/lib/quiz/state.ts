@@ -7,6 +7,7 @@ export interface QuizStateV1 {
   answeredQuestionIds: string[];
   lastPickedPlayerId: string | null;
   hasSeenIntro30Runes: boolean;
+  lastAnswerWasCorrect: boolean;
 }
 
 export function createDefaultQuizState(): QuizStateV1 {
@@ -17,6 +18,7 @@ export function createDefaultQuizState(): QuizStateV1 {
     answeredQuestionIds: [],
     lastPickedPlayerId: null,
     hasSeenIntro30Runes: false,
+    lastAnswerWasCorrect: false,
   };
 }
 
@@ -44,9 +46,20 @@ export function loadQuizState(): QuizStateV1 {
       : [];
     const lastPickedPlayerId =
       typeof p.lastPickedPlayerId === "string" && p.lastPickedPlayerId.trim() ? p.lastPickedPlayerId : null;
-    const hasSeenIntro30Runes = typeof (p as any).hasSeenIntro30Runes === "boolean" ? (p as any).hasSeenIntro30Runes : false;
+    const hasSeenIntro30Runes =
+      typeof (p as any).hasSeenIntro30Runes === "boolean" ? (p as any).hasSeenIntro30Runes : false;
+    const lastAnswerWasCorrect =
+      typeof (p as any).lastAnswerWasCorrect === "boolean" ? (p as any).lastAnswerWasCorrect : false;
 
-    return { rhunes, currentThemeSlug, currentChapterSlug, answeredQuestionIds, lastPickedPlayerId, hasSeenIntro30Runes };
+    return {
+      rhunes,
+      currentThemeSlug,
+      currentChapterSlug,
+      answeredQuestionIds,
+      lastPickedPlayerId,
+      hasSeenIntro30Runes,
+      lastAnswerWasCorrect,
+    };
   } catch {
     return createDefaultQuizState();
   }
@@ -79,14 +92,14 @@ export function startTheme(state: QuizStateV1, themeSlug: string): QuizStateV1 {
   const slug = themeSlug.trim();
   if (!slug) return state;
   if (state.currentThemeSlug === slug) return state;
-  return { ...state, currentThemeSlug: slug, currentChapterSlug: null, answeredQuestionIds: [] };
+  return { ...state, currentThemeSlug: slug, currentChapterSlug: null, answeredQuestionIds: [], lastAnswerWasCorrect: false };
 }
 
 export function startChapter(state: QuizStateV1, chapterSlug: string): QuizStateV1 {
   const slug = chapterSlug.trim();
   if (!slug) return state;
   if (state.currentChapterSlug === slug) return state;
-  return { ...state, currentChapterSlug: slug, answeredQuestionIds: [] };
+  return { ...state, currentChapterSlug: slug, answeredQuestionIds: [], lastAnswerWasCorrect: false };
 }
 
 export function setLastPickedPlayerId(state: QuizStateV1, playerId: string | null): QuizStateV1 {

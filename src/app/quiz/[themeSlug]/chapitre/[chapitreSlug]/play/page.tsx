@@ -239,9 +239,10 @@ export default function QuizChapitrePlayPage() {
     const local = loadQuizState();
     const next1 = markQuestionAnswered(local, activeQuestion.id);
     const next2 = addRhunes(next1, 10);
-    saveQuizState(next2);
-    setRhunes(next2.rhunes);
-    setAnsweredIds(next2.answeredQuestionIds);
+    const next3 = { ...next2, lastAnswerWasCorrect: true as const };
+    saveQuizState(next3);
+    setRhunes(next3.rhunes);
+    setAnsweredIds(next3.answeredQuestionIds);
     setPhase("interlude");
   }, [activeQuestion]);
 
