@@ -17,7 +17,7 @@ interface Player {
 
 interface PlayerWithScore extends Player {
   points: number;
-  rhunes: number;
+  runes: number;
 }
 
 export default function QuizTerminePage() {
@@ -37,7 +37,7 @@ export default function QuizTerminePage() {
       return {
         ...player,
         points: fromState?.points ?? 0,
-        rhunes: fromState?.rhunes ?? 0,
+        runes: fromState?.runes ?? 0,
       };
     });
     setPlayerScores(scoresForPlayers);

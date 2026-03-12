@@ -2,11 +2,11 @@ export const QUIZ_STATE_KEY = "quiz_state_v1";
 
 export interface PlayerScore {
   points: number;
-  rhunes: number;
+  runes: number;
 }
 
 export interface QuizStateV1 {
-  rhunes: number;
+  runes: number;
   playerScores: Record<string, PlayerScore>;
   currentThemeSlug: string | null;
   currentChapterSlug: string | null;
@@ -18,7 +18,7 @@ export interface QuizStateV1 {
 
 export function createDefaultQuizState(): QuizStateV1 {
   return {
-    rhunes: 0,
+    runes: 0,
     playerScores: {},
     currentThemeSlug: null,
     currentChapterSlug: null,
@@ -47,7 +47,9 @@ export function loadQuizState(): QuizStateV1 {
     const p = parsed as Partial<QuizStateV1> & {
       playerScores?: unknown;
     };
-    const rhunes = typeof p.rhunes === "number" && Number.isFinite(p.rhunes) ? Math.max(0, Math.floor(p.rhunes)) : 0;
+    const runes = typeof (p as any).runes === "number" && Number.isFinite((p as any).runes)
+      ? Math.max(0, Math.floor((p as any).runes))
+      : 0;
     const currentThemeSlug = typeof p.currentThemeSlug === "string" && p.currentThemeSlug.trim() ? p.currentThemeSlug : null;
     const currentChapterSlug = typeof p.currentChapterSlug === "string" && p.currentChapterSlug.trim() ? p.currentChapterSlug : null;
     const answeredQuestionIds = Array.isArray(p.answeredQuestionIds)
@@ -69,15 +71,17 @@ export function loadQuizState(): QuizStateV1 {
         const v = value as Partial<PlayerScore>;
         const points =
           typeof v.points === "number" && Number.isFinite(v.points) ? Math.max(0, Math.floor(v.points)) : 0;
-        const rhunesForPlayer =
-          typeof v.rhunes === "number" && Number.isFinite(v.rhunes) ? Math.max(0, Math.floor(v.rhunes)) : 0;
-        if (!points && !rhunesForPlayer) continue;
-        playerScores[playerId] = { points, rhunes: rhunesForPlayer };
+        const runesForPlayer =
+          typeof (v as any).runes === "number" && Number.isFinite((v as any).runes)
+            ? Math.max(0, Math.floor((v as any).runes))
+            : 0;
+        if (!points && !runesForPlayer) continue;
+        playerScores[playerId] = { points, runes: runesForPlayer };
       }
     }
 
     return {
-      rhunes,
+      runes,
       playerScores,
       currentThemeSlug,
       currentChapterSlug,
@@ -100,11 +104,11 @@ export function saveQuizState(next: QuizStateV1) {
   }
 }
 
-export function addRhunes(state: QuizStateV1, delta: number): QuizStateV1 {
+export function addRunes(state: QuizStateV1, delta: number): QuizStateV1 {
   const safeDelta = Number.isFinite(delta) ? Math.floor(delta) : 0;
   return {
     ...state,
-    rhunes: Math.max(0, state.rhunes + safeDelta),
+    runes: Math.max(0, state.runes + safeDelta),
   };
 }
 
@@ -112,20 +116,20 @@ export function addScoreForPlayer(
   state: QuizStateV1,
   playerId: string,
   deltaPoints: number,
-  deltaRhunes: number,
+  deltaRunes: number,
 ): QuizStateV1 {
   const id = playerId.trim();
   if (!id) return state;
 
   const safePoints = Number.isFinite(deltaPoints) ? Math.floor(deltaPoints) : 0;
-  const safeRhunes = Number.isFinite(deltaRhunes) ? Math.floor(deltaRhunes) : 0;
+  const safeRunes = Number.isFinite(deltaRunes) ? Math.floor(deltaRunes) : 0;
 
-  if (!safePoints && !safeRhunes) return state;
+  if (!safePoints && !safeRunes) return state;
 
-  const previous = state.playerScores[id] ?? { points: 0, rhunes: 0 };
+  const previous = state.playerScores[id] ?? { points: 0, runes: 0 };
   const nextForPlayer: PlayerScore = {
     points: Math.max(0, previous.points + safePoints),
-    rhunes: Math.max(0, previous.rhunes + safeRhunes),
+    runes: Math.max(0, previous.runes + safeRunes),
   };
 
   const nextPlayerScores: Record<string, PlayerScore> = {
@@ -133,11 +137,11 @@ export function addScoreForPlayer(
     [id]: nextForPlayer,
   };
 
-  const nextRhunesTotal = Math.max(0, state.rhunes + safeRhunes);
+  const nextRunesTotal = Math.max(0, state.runes + safeRunes);
 
   return {
     ...state,
-    rhunes: nextRhunesTotal,
+    runes: nextRunesTotal,
     playerScores: nextPlayerScores,
   };
 }

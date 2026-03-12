@@ -68,7 +68,7 @@ export default function QuizChapitrePlayPage() {
   const [answeredIds, setAnsweredIds] = useState<string[]>([]);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
-  const [rhunes, setRhunes] = useState(0);
+  const [runes, setRunes] = useState(0);
 
   const [phase, setPhase] = useState<Phase>("countdown");
   const [countdown, setCountdown] = useState(3);
@@ -150,7 +150,7 @@ export default function QuizChapitrePlayPage() {
       const s1 = startTheme(local, themeSlug);
       const s2 = startChapter(s1, chapitreSlug);
       saveQuizState(s2);
-      setRhunes(s2.rhunes);
+      setRunes(s2.runes);
       setAnsweredIds(s2.answeredQuestionIds);
 
       const firstId = randomQuestion?.id ?? null;
@@ -249,7 +249,7 @@ export default function QuizChapitrePlayPage() {
     const withScore = playerId ? addScoreForPlayer(next1, playerId, 10, 10) : next1;
     const next = { ...withScore, lastAnswerWasCorrect: true as const };
     saveQuizState(next);
-    setRhunes(next.rhunes);
+    setRunes(next.runes);
     setAnsweredIds(next.answeredQuestionIds);
     setPhase("interlude");
   }, [activeQuestion]);
@@ -397,7 +397,7 @@ export default function QuizChapitrePlayPage() {
                     lineHeight: "32px",
                   }}
                 >
-                  +10 rhunes
+                  +10 runes
                 </p>
               </div>
               <div className="w-full max-w-sm pb-6">
@@ -455,9 +455,9 @@ export default function QuizChapitrePlayPage() {
                 <div
                   className="shrink-0 rounded-2xl px-3 py-2 text-sm font-semibold text-white"
                   style={{ borderRadius: 16, background: "rgba(253, 253, 253, 0.15)", backdropFilter: "blur(10px)" }}
-                  aria-label={`Total de rhunes : ${rhunes}`}
+                  aria-label={`Total de runes : ${runes}`}
                 >
-                  {rhunes} rhunes
+                  {runes} runes
                 </div>
               </div>
             </div>

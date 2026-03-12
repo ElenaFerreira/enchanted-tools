@@ -36,7 +36,7 @@ Elle accompagne la **Mirokaï Experience** en proposant un parcours ludique et n
     - `onboarding/` : préparation de la session (contexte de visite, joueurs, rôles…).
     - `plan/` : hub / plan de l’espace (point de retour après reset ou fin de parcours).
     - `quiz/` : parcours de quiz scénarisé utilisé comme **fil narratif** de l’expérience
-      - `/quiz/[themeSlug]/chapitre/[chapitreSlug]/play` : logique de jeu (timer, rhunes, bonnes réponses…)
+      - `/quiz/[themeSlug]/chapitre/[chapitreSlug]/play` : logique de jeu (timer, runes, bonnes réponses…)
       - `/quiz/[themeSlug]/suite` : écrans de transition entre thèmes / mondes
       - `/quiz/transition/1-2`, `/2-3`, `/3-4` : vidéos de transition immersives entre mondes
       - `/quiz/termine` : écran de résultats / gagnant et retour vers Miroki
@@ -44,7 +44,7 @@ Elle accompagne la **Mirokaï Experience** en proposant un parcours ludique et n
     - `admin/` : panneau d’administration (si activé, réservé aux rôles admin) pour piloter le contenu.
     - `login/` : écran de connexion (accès équipe / admin).
   - `src/components` : composants UI réutilisables (`PrimaryCTA`, `BurgerMenu`, etc.)
-  - `src/lib` : logique métier (par ex. `quiz/state.ts` pour la gestion d’état du quiz, des scores et des rhunes)
+  - `src/lib` : logique métier (par ex. `quiz/state.ts` pour la gestion d’état du quiz, des scores et des runes)
   - `src/lib/supabase` : clients Supabase (`client.ts`, `server.ts`, `middleware.ts`)
   - `src/middleware.ts` : middleware d’authentification et de gestion de session
   - `public/` : assets statiques, service worker, manifest, icônes
