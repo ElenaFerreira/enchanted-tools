@@ -28,7 +28,7 @@ export function PrimaryCTA({ href, label, ariaLabel, disabled = false, className
       className={classes}
       style={{
         borderRadius: 16,
-        ...(disabled ? {} : { background: "var(--Neutral-25, #FDFDFD)" }),
+        ...(disabled ? {} : { background: "var(--Complementary-600, #FFE5A2)" }),
       }}
     >
       {label}

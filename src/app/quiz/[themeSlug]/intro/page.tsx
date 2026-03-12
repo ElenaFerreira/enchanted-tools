@@ -105,7 +105,9 @@ export default function QuizThemeIntroPage() {
             </div>
           ) : theme ? (
             <div className="w-full max-w-sm space-y-5 text-center">
-              <h1 className="text-[40px] font-medium leading-tight text-white">{theme.titre}</h1>
+              <h1 className="font-space-medium text-[40px] leading-tight text-white">
+                {theme.titre}
+              </h1>
               {theme.description ? <p className="whitespace-pre-line text-white/80">{theme.description}</p> : null}
 
               {!canStartAudio ? (

@@ -265,9 +265,7 @@ export default function QuizChapitrePlayPage() {
     if (!themeSlug) return;
 
     if (nextChapterSlug) {
-      router.replace(
-        `/quiz/${encodeURIComponent(themeSlug)}/chapitre/${encodeURIComponent(nextChapterSlug)}/audio`,
-      );
+      router.replace(`/quiz/${encodeURIComponent(themeSlug)}/chapitre/${encodeURIComponent(nextChapterSlug)}/audio`);
     } else {
       router.replace(`/quiz/${encodeURIComponent(themeSlug)}/suite`);
     }
@@ -307,12 +305,10 @@ export default function QuizChapitrePlayPage() {
           {loading ? (
             <div className="mt-10 text-center text-sm text-white/70">Chargement...</div>
           ) : error ? (
-            <div className="mt-10 w-full max-w-sm rounded-2xl border border-red-300/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-              {error}
-            </div>
+            <div className="mt-10 w-full max-w-sm rounded-2xl border border-red-300/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div>
           ) : phase === "countdown" ? (
             <div className="flex w-full flex-1 items-center justify-center text-white">
-              <div className="text-6xl font-semibold tabular-nums">{countdown}</div>
+              <div className="font-space-semibold text-6xl tabular-nums">{countdown}</div>
             </div>
           ) : phase === "question" && activeQuestion ? (
             <>
@@ -324,9 +320,7 @@ export default function QuizChapitrePlayPage() {
                 <div className="flex w-full flex-1 flex-col">
                   <div className="flex justify-center">
                     <div className="w-full max-w-sm">
-                      <p className="text-[24px] font-medium leading-[32px] text-center text-white">
-                        {activeQuestion.texte}
-                      </p>
+                      <p className="text-[24px] font-medium leading-[32px] text-center text-white">{activeQuestion.texte}</p>
 
                       <div className="mt-6 flex flex-col gap-3">
                         {(activeQuestion.quiz_reponses ?? []).map((a) => (
@@ -355,18 +349,11 @@ export default function QuizChapitrePlayPage() {
                         className="h-full"
                         style={{
                           backgroundColor: "#FFCA44",
-                          width: `${Math.max(
-                            0,
-                            Math.min(1, secondsLeft / QUESTION_TIME_SECONDS),
-                          ) * 100}%`,
+                          width: `${Math.max(0, Math.min(1, secondsLeft / QUESTION_TIME_SECONDS)) * 100}%`,
                         }}
                       />
                     </div>
-                    <div
-                      className="flex h-6 w-6 items-center justify-center text-xs font-semibold"
-                      style={{ color: "#FFCA44" }}
-                      aria-hidden="true"
-                    >
+                    <div className="flex h-6 w-6 items-center justify-center text-xs font-semibold" style={{ color: "#FFCA44" }} aria-hidden="true">
                       ⏱
                     </div>
                   </div>
@@ -376,13 +363,29 @@ export default function QuizChapitrePlayPage() {
           ) : phase === "interlude" ? (
             <div className="flex w-full flex-1 flex-col items-center">
               <div className="flex flex-1 items-center justify-center">
-                <p className="text-5xl font-semibold text-white">+10 Rhune</p>
+                <p
+                  className="text-center"
+                  style={{
+                    color: "var(--Neutral-25, #FDFDFD)",
+                    fontFamily:
+                      '"Acumin Variable Concept", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: 24,
+                    fontStyle: "normal",
+                    fontWeight: 500,
+                    lineHeight: "32px",
+                  }}
+                >
+                  +10 rhunes
+                </p>
               </div>
               <div className="w-full max-w-sm pb-6">
                 <button
                   type="button"
-                  className="w-full rounded-2xl bg-white px-4 py-3 text-center text-base font-medium text-zinc-900 shadow-sm"
-                  style={{ borderRadius: 16 }}
+                  className="w-full px-4 py-3 text-center text-base font-medium text-zinc-900 shadow-sm"
+                  style={{
+                    borderRadius: 16,
+                    background: "var(--Complementary-600, #FFE5A2)",
+                  }}
                   onClick={goNextQuestion}
                   aria-label="Passer à la question suivante"
                 >
@@ -403,8 +406,11 @@ export default function QuizChapitrePlayPage() {
               <div className="w-full max-w-sm pb-6">
                 <button
                   type="button"
-                  className="w-full rounded-2xl bg-white px-4 py-3 text-center text-base font-medium text-zinc-900 shadow-sm"
-                  style={{ borderRadius: 16 }}
+                  className="w-full px-4 py-3 text-center text-base font-medium text-zinc-900 shadow-sm"
+                  style={{
+                    borderRadius: 16,
+                    background: "var(--Complementary-600, #FFE5A2)",
+                  }}
                   onClick={retryQuestion}
                   aria-label="Réessayer la question"
                 >

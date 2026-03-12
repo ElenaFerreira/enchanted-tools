@@ -110,7 +110,20 @@ export default function QuizThemeSuitePage() {
           ) : (
             <div className="flex w-full flex-1 flex-col items-center">
               <div className="flex flex-1 flex-col items-center justify-center px-6 gap-4">
-                <p className="text-5xl font-semibold text-white">+10 Rhune</p>
+                <p
+                  className="text-center"
+                  style={{
+                    color: "var(--Neutral-25, #FDFDFD)",
+                    fontFamily:
+                      '"Acumin Variable Concept", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: 24,
+                    fontStyle: "normal",
+                    fontWeight: 500,
+                    lineHeight: "32px",
+                  }}
+                >
+                  +10 rhunes
+                </p>
                 <p
                   className="whitespace-pre-line text-center text-white"
                   style={{ fontSize: 24, fontStyle: "normal", fontWeight: 500, lineHeight: "32px" }}
