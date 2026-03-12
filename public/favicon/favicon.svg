@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000"><style>
+    #light-icon {
+      display: inline;
+    }
+    #dark-icon {
+      display: none;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      #light-icon {
+        display: none;
+      }
+      #dark-icon {
+        display: inline;
+      }
+    }
+  </style><g id="light-icon"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000"><g><g transform="matrix(8,0,0,8,68,0)"><svg xmlns="http://www.w3.org/2000/svg" width="108" height="125" viewBox="0 0 108 125" fill="none"><path d="M84.5 40.6C69.4 41 67.9 52.3 53.6 52.1C39.3 52.1 37.6 41.3 22.7 40.6C10 40.2 0 50.4 0 62.7C0 75 10.2 84.8 22.7 84.8C35.2 84.8 38 72.9 53.6 72.7C69.4 72.7 71.2 84.8 84.5 84.8C97.8 84.8 107.2 75 107.2 62.7C107.2 50.4 97 40.2 84.5 40.6Z" fill="#060B20"></path><path d="M53.6 42.2C65.2532 42.2 74.7 32.7532 74.7 21.1C74.7 9.4468 65.2532 0 53.6 0C41.9468 0 32.5 9.4468 32.5 21.1C32.5 32.7532 41.9468 42.2 53.6 42.2Z" fill="#060B20"></path><path d="M53.6 124.3C65.2532 124.3 74.7 114.853 74.7 103.2C74.7 91.5467 65.2532 82.1 53.6 82.1C41.9468 82.1 32.5 91.5467 32.5 103.2C32.5 114.853 41.9468 124.3 53.6 124.3Z" fill="#060B20"></path></svg></g></g></svg></g><g id="dark-icon"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000"><g><g transform="matrix(8,0,0,8,68,0)"><svg xmlns="http://www.w3.org/2000/svg" width="108" height="125" viewBox="0 0 108 125" fill="none"><path d="M84.5 40.6001C69.4 41.0001 67.9 52.3001 53.6 52.1001C39.3 52.1001 37.6 41.3001 22.7 40.6001C10 40.2001 0 50.4 0 62.7C0 75 10.2 84.8001 22.7 84.8001C35.2 84.8001 38 72.9 53.6 72.7C69.4 72.7 71.2 84.8001 84.5 84.8001C97.8 84.8001 107.2 75 107.2 62.7C107.2 50.4 97 40.2001 84.5 40.6001Z" fill="white"></path><path d="M53.6 42.2C65.2532 42.2 74.7 32.7532 74.7 21.1C74.7 9.4468 65.2532 0 53.6 0C41.9468 0 32.5 9.4468 32.5 21.1C32.5 32.7532 41.9468 42.2 53.6 42.2Z" fill="white"></path><path d="M53.6 124.3C65.2532 124.3 74.7 114.853 74.7 103.2C74.7 91.5468 65.2532 82.1 53.6 82.1C41.9468 82.1 32.5 91.5468 32.5 103.2C32.5 114.853 41.9468 124.3 53.6 124.3Z" fill="white"></path></svg></g></g></svg></g></svg>

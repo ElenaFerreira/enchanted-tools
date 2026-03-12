@@ -21,13 +21,42 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Enchanted Tools",
-  description: "Enchanted Tools - Application interactive",
+  title: "Mirokaï Experience",
+  description:
+    "PWA officielle de la Mirokaï Experience : un parcours de quiz immersif pour découvrir les robots Mirokaï et le Mirium, pensé pour les visiteurs de l’espace démo Enchanted Tools.",
   manifest: "/manifest.json",
+  metadataBase: new URL("https://enchanted-tools.vercel.app"),
+  openGraph: {
+    title: "Mirokaï Experience",
+    description:
+      "Parcours narratif et ludique autour des robots Mirokaï, avec quiz scénarisés, transitions animées et outils d’administration pour l’équipe Enchanted Tools.",
+    type: "website",
+    siteName: "Mirokaï Experience",
+    locale: "fr_FR",
+    images: [
+      {
+        url: "/cover.jpg",
+        width: 1024,
+        height: 671,
+        alt: "Portail lumineux dans un paysage extra-terrestre illustrant l’univers Mirokaï.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mirokaï Experience",
+    description: "PWA immersive pour accompagner la découverte des robots Mirokaï au sein de la Mirokaï Experience.",
+    images: ["/cover.jpg"],
+  },
+  icons: {
+    icon: "/favicon/favicon.svg",
+    shortcut: "/favicon/favicon.svg",
+    apple: "/icons/icon-192x192.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Enchanted Tools",
+    title: "Mirokaï Experience",
   },
   formatDetection: {
     telephone: false,
@@ -49,8 +78,10 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="stylesheet" href="https://use.typekit.net/ofr7rcw.css" />
+        <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <link rel="manifest" href="/favicon/site.webmanifest" />
       </head>
       <body className={`${spaceGrotesk.variable} antialiased bg-[#462B7E]`}>
         {children}

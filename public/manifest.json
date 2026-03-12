@@ -1,7 +1,7 @@
 {
-  "name": "Enchanted Tools",
-  "short_name": "Enchanted",
-  "description": "Enchanted Tools - Application interactive",
+  "name": "Mirokaï Experience",
+  "short_name": "Mirokaï",
+  "description": "PWA de la Mirokaï Experience : un parcours de quiz immersif pour découvrir les robots Mirokaï et le Mirium dans l’espace démo Enchanted Tools.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
@@ -9,25 +9,13 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-maskable-192x192.png",
+      "src": "/favicon/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/icon-maskable-512x512.png",
+      "src": "/favicon/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
