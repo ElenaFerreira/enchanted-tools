@@ -101,7 +101,8 @@ export default function QuizChapitreAudioPage() {
           : undefined
       }
     >
-      <div className="relative flex min-h-dvh w-full flex-col items-center">
+      <div className="absolute inset-0 bg-linear-to-b from-black/40 via-black/30 to-black/50" />
+      <div className="relative z-10 flex min-h-dvh w-full flex-col items-center">
         <header className="flex w-full items-center justify-between px-6 pt-4">
           <Link
             href={`/quiz/${encodeURIComponent(themeSlug)}/intro`}
