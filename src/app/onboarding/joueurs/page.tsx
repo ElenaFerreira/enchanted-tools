@@ -2,7 +2,8 @@
 
 import { useState, useEffect, FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, Menu } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { BurgerMenu } from "../../components/BurgerMenu";
 import { PrimaryCTA } from "../../components/PrimaryCTA";
 
 export default function JoueursPage() {
@@ -41,17 +42,7 @@ export default function JoueursPage() {
           <ArrowLeft className="h-4 w-4" />
         </Link>
 
-        <button
-          type="button"
-          aria-label="Ouvrir le menu"
-          className="flex h-9 w-9 items-center justify-center rounded-full border text-white"
-          style={{
-            borderRadius: 80,
-            borderColor: "var(--Neutral-25, #FDFDFD)",
-          }}
-        >
-          <Menu className="h-4 w-4" />
-        </button>
+        <BurgerMenu />
       </header>
 
       <main className="flex w-full flex-1 flex-col items-center px-6 pt-14">
