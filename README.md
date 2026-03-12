@@ -148,17 +148,18 @@ Puis ouvrir `http://localhost:3000` dans le navigateur.
 
 - **Accès admin**
   - Les comptes admin sont identifiés via `user.app_metadata.role = "admin"` dans Supabase.
-  - Après connexion, l’admin accède à la section `admin` (URL du type `/admin` ou `/admin/quiz` selon la configuration exacte).
+  - Après connexion, l’admin accède à la section `admin` (URL du type `/admin`).
 
 - **Fonctionnalités typiques (à adapter à votre instance)**
-  - Gestion des **thèmes de quiz** (création, modification, activation/désactivation).
-  - Gestion des **chapitres** d’un thème (ordre, titre, description, contenu pédagogique).
-  - Gestion des **questions / réponses** pour chaque chapitre.
-  - Consultation des **résultats agrégés** (scores, temps, progression).
+  - Créer, modifier et supprimer des **modules** du plan (numéro, nom, description / cartel).
+  - Associer à chaque module un **média** (audio ou vidéo) et une ou plusieurs **images**, stockés dans Supabase Storage.
+  - Gérer le **placement des modules sur le plan interactif**, en version desktop et mobile (ajouter un module au plan, le déplacer, ou le retirer du plan).
+
+> Les contenus de quiz (thèmes, chapitres, questions / réponses) sont gérés directement dans Supabase et **ne sont pas éditables depuis l’interface admin**.
 
 - **Bonnes pratiques**
   - Ne pas supprimer des données critiques : privilégier un champ `archived` / `active` quand disponible.
-  - Vérifier les libellés en français et l’accessibilité (labels, contrastes) lors de la création de contenu.
+  - Vérifier les libellés en français et l’accessibilité (labels, contrastes) lors de la création ou modification de modules.
 
 ---
 
