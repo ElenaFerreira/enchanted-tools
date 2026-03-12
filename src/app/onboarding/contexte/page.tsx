@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { saveOnboardingContext } from "@/lib/onboarding";
 import { BurgerMenu } from "../../components/BurgerMenu";
 import { PrimaryCTA } from "../../components/PrimaryCTA";
 
@@ -51,7 +52,10 @@ export default function ContextePage() {
                   background: "rgba(253, 253, 253, 0.30)",
                   backdropFilter: "blur(15px)",
                 }}
-                onClick={() => setSelected(option)}
+                onClick={() => {
+                  setSelected(option);
+                  saveOnboardingContext(option);
+                }}
               >
                 {option}
               </button>

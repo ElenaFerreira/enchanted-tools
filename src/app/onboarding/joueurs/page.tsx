@@ -10,11 +10,9 @@ import { PrimaryCTA } from "../../components/PrimaryCTA";
 
 export default function JoueursPage() {
   const [name, setName] = useState("");
-  const [players, setPlayers] = useState<OnboardingPlayer[]>([]);
-
-  useEffect(() => {
-    setPlayers(parseStoredPlayers(typeof window !== "undefined" ? localStorage.getItem(ONBOARDING_PLAYERS_KEY) : null));
-  }, []);
+  const [players, setPlayers] = useState<OnboardingPlayer[]>(() =>
+    parseStoredPlayers(typeof window !== "undefined" ? localStorage.getItem(ONBOARDING_PLAYERS_KEY) : null),
+  );
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();

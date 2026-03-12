@@ -65,7 +65,10 @@ export default function PlanEditor() {
   }, [supabase]);
 
   useEffect(() => {
-    fetchModules();
+    const id = window.setTimeout(() => {
+      void fetchModules();
+    }, 0);
+    return () => window.clearTimeout(id);
   }, [fetchModules]);
 
   const clientToVb = useCallback(

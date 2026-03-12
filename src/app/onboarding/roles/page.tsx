@@ -1,34 +1,52 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { OnboardingPlayer } from "@/lib/types";
-import { ONBOARDING_PLAYERS_KEY, parseStoredPlayers } from "@/lib/onboarding";
+import {
+  loadOnboardingContext,
+  loadStoredRoles,
+  ONBOARDING_PLAYERS_KEY,
+  ONBOARDING_ROLE_OPTIONS,
+  saveStoredRoles,
+  type OnboardingRole,
+} from "@/lib/onboarding";
+import { parseStoredPlayers } from "@/lib/onboarding";
 import { BurgerMenu } from "../../components/BurgerMenu";
 import { PrimaryCTA } from "../../components/PrimaryCTA";
 
-const ROLE_OPTIONS = ["Le père", "La mère", "L’enfant", "Le grand-parent", "L’ami", "Le collègue"] as const;
-
-type Role = (typeof ROLE_OPTIONS)[number];
-
 export default function RolesPage() {
-  const [players, setPlayers] = useState<OnboardingPlayer[]>([]);
-  const [roles, setRoles] = useState<Record<string, Role | null>>({});
+  const [players] = useState<OnboardingPlayer[]>(() =>
+    parseStoredPlayers(typeof window !== "undefined" ? localStorage.getItem(ONBOARDING_PLAYERS_KEY) : null),
+  );
+  const [context] = useState(() => loadOnboardingContext());
+  const isFamily = context === "En famille";
 
-  useEffect(() => {
-    const valid = parseStoredPlayers(typeof window !== "undefined" ? localStorage.getItem(ONBOARDING_PLAYERS_KEY) : null);
-    setPlayers(valid);
-    setRoles((prev) => {
-      const next: Record<string, Role | null> = {};
-      for (const p of valid) {
-        next[p.id] = (prev[p.id] as Role | null) ?? null;
+  const [roles, setRoles] = useState<Record<string, OnboardingRole | null>>(() => {
+    const existing = loadStoredRoles();
+    const initial: Record<string, OnboardingRole | null> = {};
+    for (const p of players) {
+      const saved = existing[p.id] ?? null;
+      initial[p.id] = saved;
+    }
+
+    if (!isFamily) {
+      const defaultRole: OnboardingRole = context === "Entre collègues" ? "Le collègue" : "L’ami";
+      for (const p of players) {
+        initial[p.id] = (initial[p.id] ?? defaultRole) as OnboardingRole;
       }
-      return next;
-    });
-  }, []);
+      saveStoredRoles(Object.fromEntries(Object.entries(initial).filter(([, v]) => v !== null)) as Record<string, OnboardingRole>);
+    }
 
-  const allAssigned = useMemo(() => players.length > 0 && players.every((p) => Boolean(roles[p.id])), [players, roles]);
+    return initial;
+  });
+
+  const allAssigned = useMemo(() => {
+    if (!players.length) return false;
+    if (!isFamily) return true;
+    return players.every((p) => Boolean(roles[p.id]));
+  }, [isFamily, players, roles]);
 
   return (
     <div className="flex min-h-dvh flex-col items-center py-6">
@@ -72,17 +90,24 @@ export default function RolesPage() {
                   className="mt-auto w-full rounded-xl bg-transparent px-2 py-1 text-xs text-white outline-none border border-white/40"
                   value={selectedRole ?? ""}
                   onChange={(event) => {
-                    const value = event.target.value as Role | "";
-                    setRoles((prev) => ({
-                      ...prev,
-                      [player.id]: value ? (value as Role) : null,
-                    }));
+                    const value = event.target.value as OnboardingRole | "";
+                    setRoles((prev) => {
+                      const next = {
+                        ...prev,
+                        [player.id]: value ? (value as OnboardingRole) : null,
+                      };
+                      saveStoredRoles(
+                        Object.fromEntries(Object.entries(next).filter(([, v]) => v !== null)) as Record<string, OnboardingRole>,
+                      );
+                      return next;
+                    });
                   }}
+                  disabled={!isFamily}
                 >
                   <option value="" className="bg-[#462B7E] text-white">
                     Sélectionner un rôle
                   </option>
-                  {ROLE_OPTIONS.map((role) => (
+                  {ONBOARDING_ROLE_OPTIONS.map((role) => (
                     <option key={role} value={role} className="bg-[#462B7E] text-white">
                       {role}
                     </option>

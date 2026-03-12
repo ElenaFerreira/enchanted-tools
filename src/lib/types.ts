@@ -3,6 +3,34 @@ export interface OnboardingPlayer {
   name: string;
 }
 
+export interface QuizTheme {
+  id: string;
+  slug: string;
+  ordre: number;
+  titre: string;
+  intro_texte: string;
+  intro_audio_url: string | null;
+  created_at: string;
+}
+
+export interface QuizQuestion {
+  id: string;
+  theme_id: string;
+  ordre: number;
+  texte: string;
+  aide_texte: string;
+  created_at: string;
+}
+
+export interface QuizAnswer {
+  id: string;
+  question_id: string;
+  ordre: number;
+  texte: string;
+  is_correct: boolean;
+  created_at: string;
+}
+
 export interface Module {
   id: string;
   number: number;

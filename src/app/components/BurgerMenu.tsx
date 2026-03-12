@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { Menu, Map, Settings } from "lucide-react";
+import { Gamepad2, Menu, Map, Settings } from "lucide-react";
 
 const menuButtonClass =
   "flex h-9 w-9 items-center justify-center rounded-full border text-white";
@@ -44,6 +44,18 @@ export function BurgerMenu() {
             className="fixed right-0 top-0 z-50 flex h-full w-full max-w-xs flex-col gap-2 border-l border-white/20 bg-[#462B7E]/95 p-6 pt-16 shadow-xl backdrop-blur-md"
             style={{ borderRadius: "16px 0 0 16px" }}
           >
+            <Link
+              href="/quiz"
+              onClick={close}
+              className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium text-white transition-colors hover:bg-white/15"
+              style={{
+                background: "rgba(253, 253, 253, 0.15)",
+                backdropFilter: "blur(10px)",
+              }}
+            >
+              <Gamepad2 className="h-5 w-5 shrink-0" aria-hidden />
+              Quizz
+            </Link>
             <Link
               href="/plan"
               onClick={close}

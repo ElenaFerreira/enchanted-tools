@@ -40,7 +40,10 @@ export default function ModuleList() {
   }, [supabase]);
 
   useEffect(() => {
-    fetchModules();
+    const id = window.setTimeout(() => {
+      void fetchModules();
+    }, 0);
+    return () => window.clearTimeout(id);
   }, [fetchModules]);
 
   const handleSave = async (data: ModuleInsert) => {

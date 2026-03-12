@@ -276,7 +276,10 @@ export default function InteractiveFloorPlan() {
     const current = modulesInActiveZone[activeModuleSlideIndex]?.mod;
     if (!current) return;
     if (!selectedModule || selectedModule.id !== current.id) {
-      setSelectedModule(current);
+      const id = window.setTimeout(() => {
+        setSelectedModule(current);
+      }, 0);
+      return () => window.clearTimeout(id);
     }
   }, [modulesInActiveZone, activeModuleSlideIndex, selectedModule]);
 
