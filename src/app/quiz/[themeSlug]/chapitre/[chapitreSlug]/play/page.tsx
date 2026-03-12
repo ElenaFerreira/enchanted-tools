@@ -66,6 +66,7 @@ export default function QuizChapitrePlayPage() {
   const [phase, setPhase] = useState<Phase>("countdown");
   const [countdown, setCountdown] = useState(3);
   const [secondsLeft, setSecondsLeft] = useState(QUESTION_TIME_SECONDS);
+  const [hasSeenHintForCurrentQuestion, setHasSeenHintForCurrentQuestion] = useState(false);
 
   const pickNextQuestionId = useCallback((ids: string[], all: QuestionRow[]) => all.find((q) => !ids.includes(q.id))?.id ?? null, []);
 
@@ -161,6 +162,10 @@ export default function QuizChapitrePlayPage() {
     [activeQuestionId, questions],
   );
 
+  useEffect(() => {
+    setHasSeenHintForCurrentQuestion(false);
+  }, [activeQuestionId]);
+
   const validateQuestionData = useMemo(() => {
     if (!activeQuestion) return { ok: false, reason: "Aucune question." as const };
     const answers = activeQuestion.quiz_reponses ?? [];
@@ -216,6 +221,17 @@ export default function QuizChapitrePlayPage() {
     return () => window.clearTimeout(id);
   }, [phase, secondsLeft]);
 
+  const goNextQuestion = useCallback(() => {
+    const nextId = pickNextQuestionId(answeredIds, questions);
+    setActiveQuestionId(nextId);
+    if (!nextId) {
+      setPhase("chapterComplete");
+      return;
+    }
+    setCountdown(3);
+    setPhase("countdown");
+  }, [answeredIds, pickNextQuestionId, questions]);
+
   const applyCorrectAnswer = useCallback(() => {
     if (!activeQuestion) return;
     const local = loadQuizState();
@@ -234,24 +250,19 @@ export default function QuizChapitrePlayPage() {
       if (!validateQuestionData.ok) return;
       const answer = (activeQuestion.quiz_reponses ?? []).find((a) => a.id === answerId);
       if (!answer) return;
-      if (answer.is_correct) applyCorrectAnswer();
-      else setPhase("wrong");
+      if (answer.is_correct) {
+        applyCorrectAnswer();
+      } else if (!hasSeenHintForCurrentQuestion) {
+        setHasSeenHintForCurrentQuestion(true);
+        setPhase("wrong");
+      } else {
+        goNextQuestion();
+      }
     },
-    [activeQuestion, applyCorrectAnswer, phase, validateQuestionData.ok],
+    [activeQuestion, applyCorrectAnswer, goNextQuestion, hasSeenHintForCurrentQuestion, phase, validateQuestionData.ok],
   );
 
   const retryQuestion = useCallback(() => setPhase("question"), []);
-
-  const goNextQuestion = useCallback(() => {
-    const nextId = pickNextQuestionId(answeredIds, questions);
-    setActiveQuestionId(nextId);
-    if (!nextId) {
-      setPhase("chapterComplete");
-      return;
-    }
-    setCountdown(3);
-    setPhase("countdown");
-  }, [answeredIds, pickNextQuestionId, questions]);
 
   const nextChapterSlug = useMemo(() => {
     if (!chapter) return null;
