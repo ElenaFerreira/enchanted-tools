@@ -47,8 +47,6 @@ export default function IntroPage() {
     };
   }, []);
 
-  const progress = duration > 0 ? Math.min(1, currentTime / duration) : 0;
-
   const handleFullscreen = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -64,6 +62,8 @@ export default function IntroPage() {
       v.webkitEnterFullScreen();
     }
   }, []);
+
+  const progress = duration > 0 ? Math.min(1, currentTime / duration) : 0;
 
   const formatTime = (value: number) => {
     if (!Number.isFinite(value)) return "0:00";
@@ -157,10 +157,6 @@ export default function IntroPage() {
                 <div className="h-1.5 w-full rounded-full bg-white/20">
                   <div className="h-1.5 rounded-full bg-white" style={{ width: `${progress * 100}%` }} />
                 </div>
-                <div
-                  className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white shadow-sm pointer-events-none"
-                  style={{ left: `${progress * 100}%`, transform: "translate(-50%, -50%)" }}
-                />
               </div>
               <div className="flex justify-between text-[10px] text-white/60">
                 <span>{formatTime(currentTime)}</span>
