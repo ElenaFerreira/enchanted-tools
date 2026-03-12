@@ -90,6 +90,16 @@ export default function QuizThemeSuitePage() {
     }
   }, [currentTheme, nextThemeSlug]);
 
+  const ctaLabel = useMemo(() => {
+    if (!nextThemeSlug) return "Voir les résultats";
+    return "Je continue";
+  }, [nextThemeSlug]);
+
+  const ctaAriaLabel = useMemo(() => {
+    if (!nextThemeSlug) return "Voir les résultats du quiz";
+    return "Passer au thème suivant";
+  }, [nextThemeSlug]);
+
   return (
     <div
       className="flex min-h-dvh flex-col items-center py-0"
@@ -123,7 +133,9 @@ export default function QuizThemeSuitePage() {
                   className="whitespace-pre-line text-center text-white"
                   style={{ fontSize: 24, fontStyle: "normal", fontWeight: 500, lineHeight: "32px" }}
                 >
-                  {`Top ! Merci de m’apprendre tout cela. Grâce à toi j’ai pu acquérir suffisamment de runes pour passer le portail du ${nextWorldLabel} monde !`}
+                  {!nextThemeSlug
+                    ? "Top ! Merci de m’avoir accompagnée tout au long de cette aventure. Grâce à toi j’ai pu acquérir suffisamment de runes pour terminer mon voyage. Découvrons maintenant les résultats ensemble !"
+                    : `Top ! Merci de m’apprendre tout cela. Grâce à toi j’ai pu acquérir suffisamment de runes pour passer le portail du ${nextWorldLabel} monde !`}
                 </p>
               </div>
             </div>
@@ -132,7 +144,12 @@ export default function QuizThemeSuitePage() {
 
         <footer className="w-full px-6 pb-0">
           <div className="mb-6 flex justify-center">
-            <PrimaryCTA href={nextHref} label="Je continue" ariaLabel="Passer au thème suivant" disabled={loading || Boolean(error)} />
+            <PrimaryCTA
+              href={nextHref}
+              label={ctaLabel}
+              ariaLabel={ctaAriaLabel}
+              disabled={loading || Boolean(error)}
+            />
           </div>
         </footer>
       </div>
