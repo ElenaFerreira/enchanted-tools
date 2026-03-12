@@ -57,19 +57,47 @@ Elle accompagne la **Mirokaï Experience** en proposant un parcours ludique et n
 
 ### 2. Schéma d’architecture
 
-```mermaid
-flowchart LR
-    U[Utilisateur] -- "Navigateur / PWA" --> Next[Next.js (App Router)]
-    Next -- "Pages Server / Client" --> Quiz[Module Quiz]
-    Next --> Admin[Interface Admin]
-    Next --> Auth[Middleware Auth]
+```text
+                 ┌──────────────────────┐
+                 │      Utilisateur     │
+                 │  (smartphone / web)  │
+                 └─────────┬────────────┘
+                           │
+                           │ Navigateur / PWA
+                           │ (manifest.json + sw.js)
+                 ┌─────────▼────────────┐
+                 │  Next.js (App Router)│
+                 │   React + Tailwind   │
+                 └─────────┬────────────┘
+           ┌───────────────┼─────────────────┐
+           │               │                 │
+           │               │                 │
+ ┌─────────▼──────┐  ┌─────▼────────┐  ┌─────▼───────┐
+ │  Module Quiz   │  │ Interface    │  │ Middleware  │
+ │ (pages /quiz)  │  │  Admin       │  │    Auth     │
+ └────────┬───────┘  └─────┬────────┘  └─────┬───────┘
+          │                │                 │
+          │                │                 │
+          │                │          ┌──────▼─────────┐
+          │                └──────────►  Supabase Auth │
+          │                           └────────────────┘
+          │
+          │ lecture / écriture
+          │ (thèmes, chapitres, questions, réponses)
+  ┌───────▼────────────────────────────────────────────┐
+  │              Supabase PostgreSQL (DB)              │
+  └────────────────────────────────────────────────────┘
 
-    Auth --> SupaAuth[Supabase Auth]
-    Quiz --> SupaDB[(Supabase DB)]
-    Admin --> SupaDB
-
-    Next --> SW[Service Worker]
-    SW --> Cache[Cache offline / assets]
+                 ┌──────────────────────┐
+                 │  Service Worker (SW) │
+                 │   (offline, cache)   │
+                 └─────────┬────────────┘
+                           │
+                           ▼
+                 ┌──────────────────────┐
+                 │   Cache offline      │
+                 │  (assets, pages…)    │
+                 └──────────────────────┘
 ```
 
 ---
