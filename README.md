@@ -11,13 +11,14 @@ Elle accompagne la **Mirokaï Experience** en proposant un parcours ludique et n
   Enchanted Tools ouvre les portes de son espace au 18 rue de la Fontaine au Roi (Paris 11ᵉ) pour faire découvrir les robots Mirokaï au grand public (familles, enfants, étudiants, curieux, touristes…).  
   L’objectif est de **démocratiser la robotique** et de montrer que les Mirokaï sont des compagnons sociaux utiles, chaleureux et accessibles.
 
-- **Problématique**  
+- **Problématique**
+
   > Comment faciliter l’expérience et la relation humaine avec les robots au sein de l’espace démo et la promouvoir ?
 
-- **Mission de cette PWA**  
-  - Transformer les contenus (quiz, audioguides, narration) en une **expérience immersive et guidée** dans l’espace Mirokaï Experience.  
-  - Aider les visiteurs à **comprendre l’univers des Mirokaï** (origines, Mirium, cas d’usage) via un parcours de quiz scénarisé.  
-  - Fournir à l’équipe Enchanted Tools un **socle technique administrable** (via Supabase) pour faire évoluer facilement les thèmes, chapitres et questions sans repasser par le code.  
+- **Mission de cette PWA**
+  - Transformer les contenus (quiz, audioguides, narration) en une **expérience immersive et guidée** dans l’espace Mirokaï Experience.
+  - Aider les visiteurs à **comprendre l’univers des Mirokaï** (origines, Mirium, cas d’usage) via un parcours de quiz scénarisé.
+  - Fournir à l’équipe Enchanted Tools un **socle technique administrable** (via Supabase) pour faire évoluer facilement les thèmes, chapitres et questions sans repasser par le code.
   - S’inscrire dans une **stratégie globale de communication** (événements, Mirokaï Experience, Robot Drinks, etc.) en proposant un support numérique cohérent avec l’identité de marque.
 
 ---
@@ -58,8 +59,8 @@ Elle accompagne la **Mirokaï Experience** en proposant un parcours ludique et n
 
 ```mermaid
 flowchart LR
-    U[Utilisateur] -->|Navigateur / PWA| Next[Next.js (App Router)]
-    Next -->|Pages Server / Client| Quiz[Module Quiz]
+    U[Utilisateur] -- "Navigateur / PWA" --> Next[Next.js (App Router)]
+    Next -- "Pages Server / Client" --> Quiz[Module Quiz]
     Next --> Admin[Interface Admin]
     Next --> Auth[Middleware Auth]
 
