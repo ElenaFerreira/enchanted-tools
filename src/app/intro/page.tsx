@@ -49,6 +49,22 @@ export default function IntroPage() {
 
   const progress = duration > 0 ? Math.min(1, currentTime / duration) : 0;
 
+  const handleFullscreen = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const v = video as HTMLVideoElement & {
+      webkitEnterFullscreen?: () => void;
+      webkitEnterFullScreen?: () => void;
+    };
+    if (typeof video.requestFullscreen === "function") {
+      void video.requestFullscreen();
+    } else if (typeof v.webkitEnterFullscreen === "function") {
+      v.webkitEnterFullscreen();
+    } else if (typeof v.webkitEnterFullScreen === "function") {
+      v.webkitEnterFullScreen();
+    }
+  }, []);
+
   const formatTime = (value: number) => {
     if (!Number.isFinite(value)) return "0:00";
     const totalSeconds = Math.max(0, Math.floor(value));
@@ -100,11 +116,7 @@ export default function IntroPage() {
               type="button"
               aria-label="Afficher la vidéo en plein écran"
               className="absolute bottom-2 right-2 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white"
-              onClick={() => {
-                const video = videoRef.current;
-                if (!video || !video.requestFullscreen) return;
-                void video.requestFullscreen();
-              }}
+              onClick={handleFullscreen}
             >
               <Maximize2 className="h-4 w-4" />
             </button>
