@@ -15,8 +15,14 @@ interface Player {
   name: string;
 }
 
+interface PlayerWithScore extends Player {
+  points: number;
+  rhunes: number;
+}
+
 export default function QuizTerminePage() {
   const [players, setPlayers] = useState<Player[]>([]);
+  const [playerScores, setPlayerScores] = useState<PlayerWithScore[]>([]);
   const [winnerId, setWinnerId] = useState<string | null>(null);
   const [winnerName, setWinnerName] = useState<string | null>(null);
 
@@ -25,8 +31,32 @@ export default function QuizTerminePage() {
     if (typeof window === "undefined") return;
     const stored = parseStoredPlayers(localStorage.getItem(ONBOARDING_PLAYERS_KEY));
     setPlayers(stored);
+
+    const scoresForPlayers: PlayerWithScore[] = stored.map((player) => {
+      const fromState = state.playerScores?.[player.id];
+      return {
+        ...player,
+        points: fromState?.points ?? 0,
+        rhunes: fromState?.rhunes ?? 0,
+      };
+    });
+    setPlayerScores(scoresForPlayers);
+
     const lastPickedId = state.lastPickedPlayerId;
     const fallback = stored[0] ?? null;
+
+    if (scoresForPlayers.length > 0) {
+      const maxPoints = Math.max(...scoresForPlayers.map((p) => p.points));
+      if (maxPoints > 0) {
+        const candidates = scoresForPlayers.filter((p) => p.points === maxPoints);
+        const winnerFromScores =
+          candidates.find((p) => (lastPickedId ? p.id === lastPickedId : false)) ?? candidates[0] ?? null;
+        setWinnerId(winnerFromScores?.id ?? null);
+        setWinnerName(winnerFromScores?.name ?? null);
+        return;
+      }
+    }
+
     if (!lastPickedId || !stored.length) {
       setWinnerId(fallback?.id ?? null);
       setWinnerName(fallback?.name ?? null);
@@ -42,11 +72,17 @@ export default function QuizTerminePage() {
     return `Bravo ${winnerName} !`;
   }, [winnerName]);
 
-  const secondPlayerName = useMemo(() => {
-    if (!winnerId) return players[1]?.name ?? null;
-    const others = players.filter((p) => p.id !== winnerId);
-    return others[0]?.name ?? null;
-  }, [players, winnerId]);
+  const winnerPoints = useMemo(() => {
+    if (!winnerId) return 0;
+    const found = playerScores.find((p) => p.id === winnerId);
+    return found?.points ?? 0;
+  }, [playerScores, winnerId]);
+
+  const secondPlayer = useMemo(() => {
+    if (!winnerId) return playerScores[1] ?? null;
+    const others = playerScores.filter((p) => p.id !== winnerId);
+    return others[0] ?? null;
+  }, [playerScores, winnerId]);
 
   return (
     <div
@@ -102,12 +138,38 @@ export default function QuizTerminePage() {
                       </div>
                     </div>
                     <div className="text-center text-white">
-                      <p className="text-base font-semibold">{winnerName}</p>
-                      <p className="text-sm text-white/80">1ᵉʳ au classement</p>
+                      <p
+                        style={{
+                          color: "#FFF",
+                          textAlign: "center",
+                          fontFamily:
+                            '"Acumin Variable Concept", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+                          fontSize: 24,
+                          fontStyle: "normal",
+                          fontWeight: 500,
+                          lineHeight: "32px",
+                        }}
+                      >
+                        {winnerName}
+                      </p>
+                      <p
+                        style={{
+                          color: "rgba(255, 255, 255, 0.70)",
+                          textAlign: "center",
+                          fontFamily:
+                            '"Acumin Variable Concept", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+                          fontSize: 20,
+                          fontStyle: "normal",
+                          fontWeight: 400,
+                          lineHeight: "30px",
+                        }}
+                      >
+                        {winnerPoints} pts
+                      </p>
                     </div>
                   </div>
 
-                  {secondPlayerName && (
+                  {secondPlayer && (
                     <div className="flex flex-col items-center gap-2">
                       <div
                         className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white/80"
@@ -116,8 +178,34 @@ export default function QuizTerminePage() {
                         <User className="h-8 w-8 text-white" aria-hidden="true" />
                       </div>
                       <div className="text-center text-white">
-                        <p className="text-base font-semibold">{secondPlayerName}</p>
-                        <p className="text-sm text-white/80">2ᵉ au classement</p>
+                        <p
+                          style={{
+                            color: "#FFF",
+                            textAlign: "center",
+                            fontFamily:
+                              '"Acumin Variable Concept", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: 24,
+                            fontStyle: "normal",
+                            fontWeight: 500,
+                            lineHeight: "32px",
+                          }}
+                        >
+                          {secondPlayer.name}
+                        </p>
+                        <p
+                          style={{
+                            color: "rgba(255, 255, 255, 0.70)",
+                            textAlign: "center",
+                            fontFamily:
+                              '"Acumin Variable Concept", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+                            fontSize: 20,
+                            fontStyle: "normal",
+                            fontWeight: 400,
+                            lineHeight: "30px",
+                          }}
+                        >
+                          {secondPlayer.points} pts
+                        </p>
                       </div>
                     </div>
                   )}

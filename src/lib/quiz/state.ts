@@ -1,7 +1,13 @@
 export const QUIZ_STATE_KEY = "quiz_state_v1";
 
+export interface PlayerScore {
+  points: number;
+  rhunes: number;
+}
+
 export interface QuizStateV1 {
   rhunes: number;
+  playerScores: Record<string, PlayerScore>;
   currentThemeSlug: string | null;
   currentChapterSlug: string | null;
   answeredQuestionIds: string[];
@@ -13,6 +19,7 @@ export interface QuizStateV1 {
 export function createDefaultQuizState(): QuizStateV1 {
   return {
     rhunes: 0,
+    playerScores: {},
     currentThemeSlug: null,
     currentChapterSlug: null,
     answeredQuestionIds: [],
@@ -37,7 +44,9 @@ export function loadQuizState(): QuizStateV1 {
     const parsed = safeParse(localStorage.getItem(QUIZ_STATE_KEY));
     if (!parsed || typeof parsed !== "object") return createDefaultQuizState();
 
-    const p = parsed as Partial<QuizStateV1>;
+    const p = parsed as Partial<QuizStateV1> & {
+      playerScores?: unknown;
+    };
     const rhunes = typeof p.rhunes === "number" && Number.isFinite(p.rhunes) ? Math.max(0, Math.floor(p.rhunes)) : 0;
     const currentThemeSlug = typeof p.currentThemeSlug === "string" && p.currentThemeSlug.trim() ? p.currentThemeSlug : null;
     const currentChapterSlug = typeof p.currentChapterSlug === "string" && p.currentChapterSlug.trim() ? p.currentChapterSlug : null;
@@ -51,8 +60,25 @@ export function loadQuizState(): QuizStateV1 {
     const lastAnswerWasCorrect =
       typeof (p as any).lastAnswerWasCorrect === "boolean" ? (p as any).lastAnswerWasCorrect : false;
 
+    const rawPlayerScores = (p as any).playerScores as unknown;
+    const playerScores: Record<string, PlayerScore> = {};
+    if (rawPlayerScores && typeof rawPlayerScores === "object") {
+      for (const [playerId, value] of Object.entries(rawPlayerScores as Record<string, unknown>)) {
+        if (typeof playerId !== "string" || !playerId.trim()) continue;
+        if (!value || typeof value !== "object") continue;
+        const v = value as Partial<PlayerScore>;
+        const points =
+          typeof v.points === "number" && Number.isFinite(v.points) ? Math.max(0, Math.floor(v.points)) : 0;
+        const rhunesForPlayer =
+          typeof v.rhunes === "number" && Number.isFinite(v.rhunes) ? Math.max(0, Math.floor(v.rhunes)) : 0;
+        if (!points && !rhunesForPlayer) continue;
+        playerScores[playerId] = { points, rhunes: rhunesForPlayer };
+      }
+    }
+
     return {
       rhunes,
+      playerScores,
       currentThemeSlug,
       currentChapterSlug,
       answeredQuestionIds,
@@ -79,6 +105,40 @@ export function addRhunes(state: QuizStateV1, delta: number): QuizStateV1 {
   return {
     ...state,
     rhunes: Math.max(0, state.rhunes + safeDelta),
+  };
+}
+
+export function addScoreForPlayer(
+  state: QuizStateV1,
+  playerId: string,
+  deltaPoints: number,
+  deltaRhunes: number,
+): QuizStateV1 {
+  const id = playerId.trim();
+  if (!id) return state;
+
+  const safePoints = Number.isFinite(deltaPoints) ? Math.floor(deltaPoints) : 0;
+  const safeRhunes = Number.isFinite(deltaRhunes) ? Math.floor(deltaRhunes) : 0;
+
+  if (!safePoints && !safeRhunes) return state;
+
+  const previous = state.playerScores[id] ?? { points: 0, rhunes: 0 };
+  const nextForPlayer: PlayerScore = {
+    points: Math.max(0, previous.points + safePoints),
+    rhunes: Math.max(0, previous.rhunes + safeRhunes),
+  };
+
+  const nextPlayerScores: Record<string, PlayerScore> = {
+    ...state.playerScores,
+    [id]: nextForPlayer,
+  };
+
+  const nextRhunesTotal = Math.max(0, state.rhunes + safeRhunes);
+
+  return {
+    ...state,
+    rhunes: nextRhunesTotal,
+    playerScores: nextPlayerScores,
   };
 }
 

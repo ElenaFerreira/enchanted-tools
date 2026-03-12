@@ -5,7 +5,14 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { addRhunes, loadQuizState, markQuestionAnswered, saveQuizState, startChapter, startTheme } from "@/lib/quiz/state";
+import {
+  addScoreForPlayer,
+  loadQuizState,
+  markQuestionAnswered,
+  saveQuizState,
+  startChapter,
+  startTheme,
+} from "@/lib/quiz/state";
 import { BurgerMenu } from "@/app/components/BurgerMenu";
 
 type Audience = "adultes" | "enfants";
@@ -238,11 +245,12 @@ export default function QuizChapitrePlayPage() {
     if (!activeQuestion) return;
     const local = loadQuizState();
     const next1 = markQuestionAnswered(local, activeQuestion.id);
-    const next2 = addRhunes(next1, 10);
-    const next3 = { ...next2, lastAnswerWasCorrect: true as const };
-    saveQuizState(next3);
-    setRhunes(next3.rhunes);
-    setAnsweredIds(next3.answeredQuestionIds);
+    const playerId = next1.lastPickedPlayerId;
+    const withScore = playerId ? addScoreForPlayer(next1, playerId, 10, 10) : next1;
+    const next = { ...withScore, lastAnswerWasCorrect: true as const };
+    saveQuizState(next);
+    setRhunes(next.rhunes);
+    setAnsweredIds(next.answeredQuestionIds);
     setPhase("interlude");
   }, [activeQuestion]);
 
