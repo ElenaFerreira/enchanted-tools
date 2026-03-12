@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { addRhunes, loadQuizState, markQuestionAnswered, saveQuizState, startChapter, startTheme } from "@/lib/quiz/state";
@@ -34,11 +34,20 @@ const THEME_BACKGROUNDS: Record<string, string> = {
 export default function QuizChapitrePlayPage() {
   const params = useParams<{ themeSlug: string; chapitreSlug: string }>();
   const router = useRouter();
-  const search = useSearchParams();
 
   const themeSlug = useMemo(() => String(params?.themeSlug ?? "").trim(), [params]);
   const chapitreSlug = useMemo(() => String(params?.chapitreSlug ?? "").trim(), [params]);
-  const audience = useMemo(() => toAudience(search.get("audience")), [search]);
+  const [audience, setAudience] = useState<Audience>("adultes");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const url = new URL(window.location.href);
+      setAudience(toAudience(url.searchParams.get("audience")));
+    } catch {
+      setAudience("adultes");
+    }
+  }, []);
 
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);

@@ -1,12 +1,22 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function QuizTransitionOneTwoPage() {
-  const search = useSearchParams();
   const router = useRouter();
-  const nextThemeSlug = search.get("nextTheme");
-  const nextHref = nextThemeSlug ? `/quiz/${encodeURIComponent(nextThemeSlug)}/intro` : "/quiz";
+  const [nextHref, setNextHref] = useState("/quiz");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const url = new URL(window.location.href);
+      const nextThemeSlug = url.searchParams.get("nextTheme");
+      setNextHref(nextThemeSlug ? `/quiz/${encodeURIComponent(nextThemeSlug)}/intro` : "/quiz");
+    } catch {
+      setNextHref("/quiz");
+    }
+  }, []);
 
   return (
     <div className="flex min-h-dvh w-full bg-black">
